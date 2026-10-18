@@ -196,7 +196,7 @@ Write tool descriptions for agents. Each should say when to call the tool, the u
 
 - **M2 done** (2026-10-18): exact annuity loan, NOI, cash flow, gross and net yield, cash-on-cash, DSCR, break-even rent, MRG check (permit dates, building size, public funds), statutory minimum repair reserve, flags v0. 9 underwriting golden cases from the oracle, MRG and reserve date boundaries, property tests. Deviation from the sketch: inputs are grouped (`property`, `rent`, `ownerCosts`) and N/A metrics are `null`.
 
-- **M3 done** (2026-10-18): `packages/mcp-server` with `estimate_acquisition_costs`, `underwrite_property` and `get_rules` over stdio (MCP SDK 1.32). Each result is a readable summary plus the full JSON; input errors and uncovered dates come back as tool errors the agent can fix. `valuationDate` defaults to today in Vienna. Tested in-memory, over stdio against the built CLI, and with MCP Inspector 2.11. Claude Desktop and Claude Code setup is in the README; still to try on a real install.
+- **M3 done** (2026-10-18): `packages/mcp-server` with `estimate_acquisition_costs`, `underwrite_property` and `get_rules` over stdio (MCP SDK 1.32). Each result is a readable summary plus the full JSON; input errors and uncovered dates come back as tool errors the agent can fix. `valuationDate` defaults to today in Vienna. Tested in-memory, over stdio against the built CLI, and with MCP Inspector 2.11. Setup is in the README; verified in Claude Code on Windows on 2026-10-18.
 
 ## Decided
 
