@@ -48,6 +48,15 @@
       "status": "partial",
       "basis": "permitDate"
     },
+    "rentCap": {
+      "status": "noCap",
+      "richtwertPerM2Cents": null,
+      "openEndedBaseCents": null,
+      "fixedTermBaseCents": null,
+      "applicableBaseCents": null,
+      "rentToBasePct": null
+    },
+    "fullMrgSeverity": null,
     "tax": {
       "method": "tariff",
       "marginalRatePct": 55.0,
@@ -147,5 +156,8 @@
     "Year 3: result €9,260.19 (interest €0.00, AfA €2,793.33), tax €5,093.10, cash flow after tax €6,120.42",
     "Liebhaberei: 25-year cumulative result with reserve deducted €202,124.78, totalSurplus"
   ],
-  "oracle": "Independent Python Fraction implementation (exact annuity, explicit rounding)."
+  "oracle": "Independent Python Fraction implementation (exact annuity, explicit rounding).",
+  "history": [
+    "Engine 0.4.0: added expected.rentCap and expected.fullMrgSeverity for the Richtwert cap. Earlier expectations unchanged."
+  ]
 }

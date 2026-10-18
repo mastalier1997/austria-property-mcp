@@ -3,6 +3,7 @@
  * field for the agent; range checks and legal limits stay in the engine, which
  * reports every problem at once.
  */
+import { AUSTRIAN_STATES } from "@austria-property/engine";
 import { z } from "zod";
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD");
@@ -120,6 +121,10 @@ export const underwriteInput = {
       buildingYear: z.number().int().optional().describe("Year the building was completed (Baujahr). Used as an estimate if the permit date is unknown."),
       publicFunding: z.boolean().optional().describe("Whether the building was built with public funds (e.g. Wohnbauförderung)."),
       unitsInBuilding: z.number().int().optional().describe("Number of separate flats or business units in the building."),
+      state: z
+        .enum(AUSTRIAN_STATES)
+        .optional()
+        .describe("Bundesland (ä → ae, ö → oe), e.g. \"wien\" for Vienna, \"steiermark\" for Graz. Needed for the Richtwert rent cap."),
     })
     .optional()
     .describe("Property facts. Pass what you know; missing facts are flagged."),
@@ -131,6 +136,10 @@ export const underwriteInput = {
         
         .optional()
         .describe("Monthly operating costs (Betriebskosten) in EUR, passed on to the tenant."),
+      fixedTerm: z
+        .boolean()
+        .optional()
+        .describe("Whether the lease is fixed-term (befristet). For rent-capped flats this lowers the cap by 25%. Omit if unknown."),
     })
     .describe("Expected rent."),
   ownerCosts: z

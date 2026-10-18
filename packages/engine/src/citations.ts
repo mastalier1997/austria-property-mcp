@@ -24,6 +24,11 @@ export const SOURCES = {
   wkoReserve2026:
     "https://www.wko.at/information-consulting/immobilien-vermoegenstreuhaender/mindestruecklage-wohnungseigentumsgesetz",
   oviReserve2026: "https://www.ovi.at/aktuelles/detailansicht/anhebung-der-mindestruecklage-1-1-2026",
+  mrg16: "https://www.ris.bka.gv.at/NormDokument.wxe?Abfrage=Bundesnormen&Gesetzesnummer=10002531&Paragraf=16",
+  richtwg5: "https://www.ris.bka.gv.at/NormDokument.wxe?Abfrage=Bundesnormen&Gesetzesnummer=10003166&Paragraf=5",
+  richtwg: "https://www.ris.bka.gv.at/GeltendeFassung.wxe?Abfrage=Bundesnormen&Gesetzesnummer=10003166",
+  richtwerte2023: "https://www.ris.bka.gv.at/Dokumente/BgblAuth/BGBLA_2023_II_81/BGBLA_2023_II_81.pdf",
+  richtwerte2026: "https://www.statistik.at/fileadmin/pages/2114/VOe_Richtwerte_Kategoriemieten_20260401.pdf",
   mrg1: "https://www.ris.bka.gv.at/NormDokument.wxe?Abfrage=Bundesnormen&Gesetzesnummer=10002531&Paragraf=1",
   estg16: "https://www.ris.bka.gv.at/NormDokument.wxe?Abfrage=Bundesnormen&Gesetzesnummer=10004570&Paragraf=16",
   estg19: "https://www.ris.bka.gv.at/NormDokument.wxe?Abfrage=Bundesnormen&Gesetzesnummer=10004570&Paragraf=19",

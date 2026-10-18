@@ -1,0 +1,161 @@
+{
+  "name": "richtwert-on-april-2026",
+  "description": "Same flat on 2026-04-01: the Richtwert rises by the capped 1% to €6.74.",
+  "input": {
+    "valuationDate": "2026-04-01",
+    "purchasePrice": 230000,
+    "broker": "none",
+    "property": {
+      "livingAreaM2": 47.5,
+      "ownership": "condominium",
+      "buildingPermitDate": "1890-01-01",
+      "state": "wien"
+    },
+    "rent": {
+      "netColdMonthly": 640,
+      "operatingCostsMonthly": 150,
+      "fixedTerm": true
+    },
+    "ownerCosts": {
+      "reserveFundMonthly": 60
+    }
+  },
+  "expected": {
+    "acquisitionTotalCents": 1475000,
+    "financing": null,
+    "operating": {
+      "rent": 64000,
+      "vacancy": 3160,
+      "reserveFund": 6000,
+      "maintenance": 4079
+    },
+    "metrics": {
+      "monthlyNoiCents": 50761,
+      "monthlyCashFlowCents": 50761,
+      "grossYieldPct": 3.34,
+      "netYieldPct": 2.49,
+      "cashOnCashPct": 2.49,
+      "dscr": null,
+      "totalInvestmentCents": 24475000,
+      "equityCents": 24475000,
+      "breakEvenRentCents": 11124,
+      "breakEvenRentPerM2": 2.34
+    },
+    "rentRegulation": {
+      "status": "full",
+      "basis": "permitDate"
+    },
+    "rentCap": {
+      "status": "richtwert",
+      "richtwertPerM2Cents": 674,
+      "openEndedBaseCents": 32015,
+      "fixedTermBaseCents": 24011,
+      "applicableBaseCents": 24011,
+      "rentToBasePct": 266.54
+    },
+    "fullMrgSeverity": "high",
+    "tax": {
+      "method": "marginalRate",
+      "marginalRatePct": 40.0,
+      "landSharePct": 40.0,
+      "afa": {
+        "costBasisCents": 24475000,
+        "landShareCents": 9790000,
+        "buildingCents": 14685000
+      },
+      "loanCosts": null,
+      "years": [
+        {
+          "year": 1,
+          "netRentalIncomeCents": 730080,
+          "interestCents": 0,
+          "afaCents": 660825,
+          "operatingCostsCents": 48948,
+          "loanCostsCents": 0,
+          "reserveNotDeductedCents": 72000,
+          "resultCents": 20307,
+          "taxCents": 8123,
+          "cashFlowBeforeTaxCents": 609132,
+          "cashFlowAfterTaxCents": 601009
+        },
+        {
+          "year": 2,
+          "netRentalIncomeCents": 730080,
+          "interestCents": 0,
+          "afaCents": 440550,
+          "operatingCostsCents": 48948,
+          "loanCostsCents": 0,
+          "reserveNotDeductedCents": 72000,
+          "resultCents": 240582,
+          "taxCents": 96233,
+          "cashFlowBeforeTaxCents": 609132,
+          "cashFlowAfterTaxCents": 512899
+        },
+        {
+          "year": 3,
+          "netRentalIncomeCents": 730080,
+          "interestCents": 0,
+          "afaCents": 220275,
+          "operatingCostsCents": 48948,
+          "loanCostsCents": 0,
+          "reserveNotDeductedCents": 72000,
+          "resultCents": 460857,
+          "taxCents": 184343,
+          "cashFlowBeforeTaxCents": 609132,
+          "cashFlowAfterTaxCents": 424789
+        },
+        {
+          "year": 4,
+          "netRentalIncomeCents": 730080,
+          "interestCents": 0,
+          "afaCents": 220275,
+          "operatingCostsCents": 48948,
+          "loanCostsCents": 0,
+          "reserveNotDeductedCents": 72000,
+          "resultCents": 460857,
+          "taxCents": 184343,
+          "cashFlowBeforeTaxCents": 609132,
+          "cashFlowAfterTaxCents": 424789
+        },
+        {
+          "year": 5,
+          "netRentalIncomeCents": 730080,
+          "interestCents": 0,
+          "afaCents": 220275,
+          "operatingCostsCents": 48948,
+          "loanCostsCents": 0,
+          "reserveNotDeductedCents": 72000,
+          "resultCents": 460857,
+          "taxCents": 184343,
+          "cashFlowBeforeTaxCents": 609132,
+          "cashFlowAfterTaxCents": 424789
+        }
+      ],
+      "monthlyCashFlowAfterTaxYear1Cents": 50084,
+      "liebhaberei": {
+        "status": "totalSurplus",
+        "cumulativeResultCents": 9060600,
+        "totalSurplusFromYear": 2
+      }
+    },
+    "flags": [
+      "assumption.contractFee",
+      "assumption.landShare",
+      "assumption.operatingDefaults",
+      "assumption.taxRate",
+      "rent.fullMrg"
+    ]
+  },
+  "derivation": [
+    "Vacancy: 4% × €790.00 = €31.60",
+    "Maintenance: 0.2% × €244,750.00 ÷ 12 = €40.79",
+    "NOI €507.61, cash flow €507.61 a month, break-even rent €111.24",
+    "Richtwert: €6.74/m² × 47.5 m² = €320.15 (fixed-term −25%: €240.11); rent is 266.54% of €240.11",
+    "AfA basis: (€244,750.00 − €0.00 mortgage fee) × (1 − 40.0% land) = €146,850.00",
+    "Year 1: result €203.07 (interest €0.00, AfA €6,608.25), tax €81.23, cash flow after tax €6,010.09",
+    "Year 2: result €2,405.82 (interest €0.00, AfA €4,405.50), tax €962.33, cash flow after tax €5,128.99",
+    "Year 3: result €4,608.57 (interest €0.00, AfA €2,202.75), tax €1,843.43, cash flow after tax €4,247.89",
+    "Liebhaberei: 25-year cumulative result with reserve deducted €90,606.00, totalSurplus"
+  ],
+  "oracle": "Independent Python Fraction implementation (exact annuity, explicit rounding)."
+}

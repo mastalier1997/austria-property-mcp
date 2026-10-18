@@ -11,7 +11,7 @@ The server offers three read-only tools:
 | Tool | What it does |
 |---|---|
 | `estimate_acquisition_costs` | Purchase costs on top of the price (Grunderwerbsteuer, land-register fees, broker commission with legal-cap check, contract costs) |
-| `underwrite_property` | Full buy-to-let analysis: costs, loan payment, cash flow before and after income tax, yields, break-even rent, MRG rent caps, AfA, Liebhaberei check, risk flags |
+| `underwrite_property` | Full buy-to-let analysis: costs, loan payment, cash flow before and after income tax, yields, break-even rent, MRG rent caps with the Richtwert, AfA, Liebhaberei check, risk flags |
 | `get_rules` | The statutory values and default assumptions behind the numbers, with legal basis and source links |
 
 Each result has a short readable summary followed by the full result as JSON.
@@ -83,7 +83,7 @@ result.flags;                          // negative cash flow, assumptions used, 
 
 - **Acquisition costs:** Grunderwerbsteuer, Grundbuch fees and broker commission, using the rules valid on a given date.
 - **Underwriting:** loan payment, cash flow, gross and net yield, cash-on-cash return, break-even rent and DSCR.
-- **Rent regulation:** whether the MRG caps the rent, from the building permit date, ownership type and building size.
+- **Rent regulation:** whether the MRG caps the rent, from the building permit date, ownership type and building size, and for capped flats the Richtwert base (Richtwert × m², −25% for fixed-term leases) compared with the assumed rent.
 - **Income tax on rent:** AfA (including the accelerated rates) with the land share from the Grundanteilverordnung, the yearly rental result, income tax at a marginal rate or with the exact § 33 tariff, cash flow after tax, and a 25-year Liebhaberei check.
 - **Risk flags:** negative cash flow, high LTV, thin debt cover, missing inputs, and rent that may exceed a legal cap.
 - **Sources:** every statutory line item carries its legal basis and a source URL, so an agent can cite it.

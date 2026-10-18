@@ -18,6 +18,7 @@ export { brokerCap, type BrokerCap } from "./calc/brokerCap.js";
 export { HEURISTICS, underwrite, UNDERWRITE_LIMITATIONS } from "./calc/underwrite.js";
 export { annuityPayment, annuitySchedule, type AnnuitySchedule } from "./calc/financing.js";
 export { bracketRate, incomeTax, landShare, TAX_YEARS_SHOWN, tariffFor, type LandShareFacts, type Tariff } from "./calc/tax.js";
+export { AUSTRIAN_STATES, rentCap, type AustrianState, type RentCap, type RentCapStatus } from "./calc/rentCap.js";
 export {
   BUILDING_YEAR_MARGIN,
   type Ownership,

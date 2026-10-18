@@ -1,6 +1,6 @@
 {
   "name": "@austria-property/worker",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "private": true,
   "description": "Hosted MCP endpoint on Cloudflare Workers (stateless streamable HTTP).",
   "license": "AGPL-3.0-only",

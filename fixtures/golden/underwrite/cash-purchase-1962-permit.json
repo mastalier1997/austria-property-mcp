@@ -48,6 +48,15 @@
       "status": "partial",
       "basis": "permitDate"
     },
+    "rentCap": {
+      "status": "noCap",
+      "richtwertPerM2Cents": null,
+      "openEndedBaseCents": null,
+      "fixedTermBaseCents": null,
+      "applicableBaseCents": null,
+      "rentToBasePct": null
+    },
+    "fullMrgSeverity": null,
     "tax": {
       "method": "marginalRate",
       "marginalRatePct": 40.0,
@@ -149,6 +158,7 @@
   ],
   "oracle": "Independent Python Fraction implementation (exact annuity, explicit rounding).",
   "history": [
-    "Engine 0.3.0: added expected.tax and the tax flags (assumption.taxRate, assumption.landShare, tax.*) for the new tax module. Earlier expectations unchanged."
+    "Engine 0.3.0: added expected.tax and the tax flags (assumption.taxRate, assumption.landShare, tax.*) for the new tax module. Earlier expectations unchanged.",
+    "Engine 0.4.0: added expected.rentCap and expected.fullMrgSeverity for the Richtwert cap. Earlier expectations unchanged."
   ]
 }

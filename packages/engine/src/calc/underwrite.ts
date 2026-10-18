@@ -33,6 +33,7 @@ import type {
 import { ENGINE_VERSION } from "../version.js";
 import { acquisitionCosts, DISCLAIMER, InputError, LIMITATIONS, type InputIssue } from "./acquisitionCosts.js";
 import { annuitySchedule, type AnnuitySchedule } from "./financing.js";
+import { AUSTRIAN_STATES, rentCap } from "./rentCap.js";
 import { classifyRentRegulation, type Ownership } from "./rentRegulation.js";
 import { cite, RuleTracker } from "./ruleTracker.js";
 import { rentalTax } from "./tax.js";
@@ -57,7 +58,8 @@ export const UNDERWRITE_LIMITATIONS: readonly string[] = Object.freeze([
   "Rent, costs and the interest rate are held constant; no indexation, rent increases or rate resets after a fixed period.",
   "Rent inputs are taken as net of VAT; VAT on rent is not modelled.",
   "The minimum repair reserve is applied to the flat's own floor area; actual shares follow the co-ownership ratio.",
-  "The rent-regulation check covers only building size and permit dates (§ 1 Abs. 2 Z 5, Abs. 4 Z 1 and Z 3 MRG). Attic conversions, extensions and other special cases are not checked, and Richtwert levels are not computed.",
+  "The rent-regulation check covers only building size and permit dates (§ 1 Abs. 2 Z 5, Abs. 4 Z 1 and Z 3 MRG). Attic conversions, extensions and other special cases are not checked.",
+  "The Richtwert cap is the base amount (Richtwert × floor area, less 25% for a fixed-term lease). Zuschläge and Abschläge for features, location, condition and Ausstattungskategorie are not computed, nor is the angemessener Mietzins. Kategorie D flats have a much lower cap that is not modelled.",
 ]);
 
 const OWNERSHIPS: readonly Ownership[] = ["condominium", "house", "wholeBuilding"];
@@ -107,6 +109,9 @@ function normalise(input: UnderwriteInput, issues: InputIssue[]): Normalised {
     if (input.rent.operatingCostsMonthly !== undefined) {
       operatingCostsCents = amount("rent.operatingCostsMonthly", input.rent.operatingCostsMonthly, true);
     }
+    if (input.rent.fixedTerm !== undefined && typeof input.rent.fixedTerm !== "boolean") {
+      issues.push({ path: "rent.fixedTerm", message: "must be true, false or omitted" });
+    }
   }
 
   // Property
@@ -137,6 +142,9 @@ function normalise(input: UnderwriteInput, issues: InputIssue[]): Normalised {
     }
     if (p.unitsInBuilding !== undefined && (!Number.isInteger(p.unitsInBuilding) || p.unitsInBuilding < 1)) {
       issues.push({ path: "property.unitsInBuilding", message: "must be a whole number of at least 1" });
+    }
+    if (p.state !== undefined && !AUSTRIAN_STATES.includes(p.state)) {
+      issues.push({ path: "property.state", message: `must be one of ${AUSTRIAN_STATES.join(", ")}` });
     }
   }
 
@@ -467,14 +475,25 @@ export function underwrite(input: UnderwriteInput): UnderwriteResult {
       breakEvenRentCents !== null && n.areaHundredths !== undefined ? ratio(breakEvenRentCents, n.areaHundredths, 2) : null,
   };
 
-  // Rent regulation
+  // Rent regulation and the Richtwert cap
   const rentRegulation = classifyRentRegulation(input.property ?? {}, rules);
+  const cap = rentCap(
+    { regulation: rentRegulation, property: input.property ?? {}, areaHundredths: n.areaHundredths, fixedTerm: input.rent.fixedTerm, rentCents: n.rentCents },
+    rules,
+  );
+  const reclaim = "Tenants can challenge the rent within three years (for a fixed-term lease, not before six months after it ends) and reclaim overpaid rent.";
+  const aboveBase = cap.status === "richtwert" && n.rentCents > cap.applicableBaseCents!;
   if (rentRegulation.status === "full") {
+    const withinBase = cap.status === "richtwert" && !aboveBase;
     flags.push({
       id: "rent.fullMrg",
-      severity: rentRegulation.basis === "permitDate" ? "high" : "warn",
-      message: `${rentRegulation.summary} The assumed rent of ${formatEur(n.rentCents)} may exceed what can lawfully be charged; tenants can reclaim overpaid rent.`,
-      citations: rentRegulation.citations,
+      severity: withinBase ? "info" : rentRegulation.basis === "permitDate" ? "high" : "warn",
+      message:
+        cap.status === "richtwert"
+          ? `${rentRegulation.summary} The assumed rent of ${formatEur(n.rentCents)} is ${cap.rentToBasePct}% of the Richtwert base: ${cap.explanation}` +
+            (withinBase ? " Within the base, the rent should be lawful unless Abschläge apply." : ` ${reclaim}`)
+          : `${rentRegulation.summary} ${cap.explanation} The assumed rent of ${formatEur(n.rentCents)} may exceed what can lawfully be charged. ${reclaim}`,
+      citations: [...rentRegulation.citations, ...cap.citations],
     });
   } else if (rentRegulation.status === "unknown") {
     flags.push({
@@ -483,6 +502,14 @@ export function underwrite(input: UnderwriteInput): UnderwriteResult {
       message: rentRegulation.summary,
       citations: rentRegulation.citations,
     });
+    if (aboveBase) {
+      flags.push({
+        id: "rent.aboveRichtwert",
+        severity: "warn",
+        message: `If the MRG applies in full, the assumed rent of ${formatEur(n.rentCents)} is ${cap.rentToBasePct}% of the Richtwert base: ${cap.explanation}`,
+        citations: cap.citations,
+      });
+    }
   } else if (rentRegulation.basis === "buildingYear") {
     flags.push({
       id: "rent.regulationEstimated",
@@ -601,6 +628,7 @@ export function underwrite(input: UnderwriteInput): UnderwriteResult {
     operating,
     metrics,
     rentRegulation,
+    rentCap: cap,
     tax: taxCalculation.tax,
     flags,
     assumptionsUsed: { ...acquisition.assumptionsUsed, ...n.operating },

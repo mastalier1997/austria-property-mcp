@@ -67,6 +67,22 @@ describe("MCP server", () => {
     expect(texts(r)[0]).toMatch(/Liebhaberei \(25 years\): total surplus from year 20/);
   });
 
+  it("reports the Richtwert cap for a fully regulated flat", async () => {
+    const input = {
+      valuationDate: "2026-10-18",
+      purchasePrice: 340_000,
+      broker: "none",
+      property: { livingAreaM2: 68, ownership: "condominium", buildingPermitDate: "1905-06-01", state: "wien" },
+      rent: { netColdMonthly: 980, fixedTerm: true },
+      ownerCosts: { reserveFundMonthly: 95 },
+    };
+    const r = await call("underwrite_property", input);
+    expect(r.isError).toBeFalsy();
+    expect(json<UnderwriteResult>(r).rentCap.applicableBaseCents).toBe(34_374);
+    expect(texts(r)[0]).toMatch(/Richtwert cap: Richtwert €6\.74 per m² × 68 m² = €343\.74 for the fixed-term lease/);
+    expect(texts(r)[0]).toMatch(/The assumed rent is 285\.1% of €343\.74\./);
+  });
+
   it("passes tax facts through to the engine", async () => {
     const input = { ...MEIDLING.input, tax: { otherTaxableIncome: 45_000, municipalityInhabitants: 2_000_000 } };
     const r = await call("underwrite_property", input);

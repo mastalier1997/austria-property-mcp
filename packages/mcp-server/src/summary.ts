@@ -58,6 +58,7 @@ export function summariseUnderwrite(r: UnderwriteResult): string {
     `Returns: gross yield ${pct(m.grossYieldPct)}, net yield ${pct(m.netYieldPct)}, cash-on-cash ${pct(m.cashOnCashPct)}, DSCR ${m.dscr ?? "n/a"}.`,
     `Break-even rent: ${m.breakEvenRentCents === null ? "not reachable" : formatEur(m.breakEvenRentCents)}${m.breakEvenRentPerM2 === null ? "" : ` (€${m.breakEvenRentPerM2.toFixed(2)} per m²)`}.`,
     `Rent regulation (MRG): ${r.rentRegulation.status}. ${r.rentRegulation.summary}`,
+    ...rentCapLine(r),
     ...taxLines(r),
     "",
     ...flagLines(r.flags),
@@ -65,6 +66,15 @@ export function summariseUnderwrite(r: UnderwriteResult): string {
     r.disclaimer,
   );
   return lines.join("\n");
+}
+
+function rentCapLine(r: UnderwriteResult): string[] {
+  const c = r.rentCap;
+  if (c.status === "noCap") return [];
+  if (c.status === "richtwert") {
+    return [`Richtwert cap: ${c.explanation} The assumed rent is ${c.rentToBasePct}% of ${formatEur(c.applicableBaseCents ?? 0)}.`];
+  }
+  return [`Rent cap: ${c.explanation}`];
 }
 
 function taxLines(r: UnderwriteResult): string[] {

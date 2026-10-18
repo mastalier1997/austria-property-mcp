@@ -40,7 +40,7 @@ export const BUILDING_YEAR_MARGIN = { before: 1, after: 5 } as const;
 
 type Tri = boolean | undefined;
 
-function permitAfter(cutoff: IsoDate, input: RentRegulationInput): { after: Tri; basis: RentRegulation["basis"] } {
+export function permitAfter(cutoff: IsoDate, input: RentRegulationInput): { after: Tri; basis: RentRegulation["basis"] } {
   if (input.buildingPermitDate !== undefined) {
     return { after: input.buildingPermitDate > cutoff, basis: "permitDate" };
   }

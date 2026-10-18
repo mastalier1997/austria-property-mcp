@@ -1,6 +1,6 @@
 {
   "name": "austria-property-mcp",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "MCP server for Austrian residential property: purchase costs (Grunderwerbsteuer, Grundbuch, broker cap), buy-to-let underwriting with rental income tax (AfA, Liebhaberei) and MRG rent-cap checks, every number cited to its legal source.",
   "license": "AGPL-3.0-only",
   "author": "Jan Henrik Mastalier",

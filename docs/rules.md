@@ -2,7 +2,7 @@
 
 Every statutory number the engine uses, where it comes from, and how it was checked. The code is the source of truth (`packages/engine/src/rules/`); a test fails if a rule id is missing from this page.
 
-**Coverage:** valuation dates from **2025-04-01** to **2027-12-31**. Earlier dates throw `RuleNotCoveredError`, because the court-fee amounts before the April 2025 valorisation have not been verified. From 2028 the statutory minimum repair reserve is re-indexed; until that amount is added, underwriting needs `ownerCosts.reserveFundMonthly` for 2028 dates. The income tax tariff is known up to 2027, so `tax.otherTaxableIncome` works only for valuation dates up to 2027-12-31; the marginal-rate method has no such limit.
+**Coverage:** valuation dates from **2025-04-01** to **2027-12-31**. Earlier dates throw `RuleNotCoveredError`, because the court-fee amounts before the April 2025 valorisation have not been verified. From 2028 the statutory minimum repair reserve is re-indexed; until that amount is added, underwriting needs `ownerCosts.reserveFundMonthly` for 2028 dates. The income tax tariff is known up to 2027, so `tax.otherTaxableIncome` works only for valuation dates up to 2027-12-31; the marginal-rate method has no such limit. The Richtwerte are known up to 2027-03-31; for later dates the rent cap is reported as not yet published.
 
 **Last full check:** 2026-10-18, against the statute texts in RIS.
 
@@ -91,10 +91,51 @@ All three valid from 2025-04-01 (the engine's coverage start; earlier versions n
 How the check works:
 - **Excluded:** a building with at most two separate units (a house counts as one) is outside the MRG; rent is free.
 - **Partial:** a condominium whose building permit is after 8 May 1945, or a building newly built without public funds with a permit after 30 June 1953. Only §§ 14, 16b, 29–36, 45, 46 and 49 apply, so § 16's rent caps do not. Tenancy protection still applies.
-- **Full:** otherwise. Rent is capped at the Richtwert or the angemessener Mietzins (§ 16); the engine flags this but does not compute the cap yet.
+- **Full:** otherwise. Rent is capped at the Richtwert or the angemessener Mietzins (§ 16); see "Richtwert cap" below.
 - **Unknown:** when the inputs don't settle it (no permit date or build year, unknown ownership, or unknown public funding for a whole building).
 - **Build year as an estimate** (heuristic): without a permit date, a building completed at least one year before the cut-off year counts as permitted before it, one completed at least five years after as permitted after it; years in between stay unknown. Results based on the build year are marked as estimates.
 - Not checked: attic conversions and extensions (§ 1 Abs. 4 Z 2, 2a), other exclusions, and subsidy rules. A publicly funded building gets its own flag.
+
+### Richtwert cap
+
+For fully regulated flats, the net cold rent (Hauptmietzins, excluding operating costs and VAT) is capped at the Richtwert for the Bundesland plus or minus Zuschläge and Abschläge (§ 16 Abs. 2 MRG). The Richtwert is set per m² of usable floor area per month for the *Normwohnung*: 30–130 m², Kategorie A, usable condition, in a well-maintained building in an average location (§§ 1–2 [RichtWG](https://www.ris.bka.gv.at/GeltendeFassung.wxe?Abfrage=Bundesnormen&Gesetzesnummer=10003166)).
+
+| Rule id | 2023-04-01 – 2026-03-31 | 2026-04-01 – 2027-03-31 |
+|---|---|---|
+| `at.richtwert.burgenland` | €6.09 | €6.15 |
+| `at.richtwert.kaernten` | €7.81 | €7.89 |
+| `at.richtwert.niederoesterreich` | €6.85 | €6.92 |
+| `at.richtwert.oberoesterreich` | €7.23 | €7.30 |
+| `at.richtwert.salzburg` | €9.22 | €9.31 |
+| `at.richtwert.steiermark` | €9.21 | €9.30 |
+| `at.richtwert.tirol` | €8.14 | €8.22 |
+| `at.richtwert.vorarlberg` | €10.25 | €10.35 |
+| `at.richtwert.wien` | €6.67 | €6.74 |
+
+- **2023 amounts:** [BGBl. II Nr. 81/2023](https://www.ris.bka.gv.at/Dokumente/BgblAuth/BGBLA_2023_II_81/BGBLA_2023_II_81.pdf), effective 2023-04-01.
+- **No change in 2024 or 2025:** [§ 5 Abs. 2 RichtWG](https://www.ris.bka.gv.at/NormDokument.wxe?Abfrage=Bundesnormen&Gesetzesnummer=10003166&Paragraf=5) idF BGBl. I Nr. 114/2025 adjusts on 1 April 2022 and 2023, then yearly from 1 April 2026.
+- **2026 amounts:** the yearly CPI adjustment, capped at **+1%** for 2026. Statistik Austria publishes the amounts ([April 2026 list](https://www.statistik.at/fileadmin/pages/2114/VOe_Richtwerte_Kategoriemieten_20260401.pdf)); the law provides no separate Kundmachung. Each equals the 2023 amount × 1.01, rounded to the cent (exactly half a cent rounds down).
+- **Next:** 1 April 2027, capped at +2%; from 2028 only half of inflation above 3% counts. Add the 2027 amounts when Statistik Austria publishes them.
+
+| Rule id | Value | Legal basis |
+|---|---|---|
+| `at.mrg.fixedTermReduction` | −25% for a fixed-term lease | [§ 16 Abs. 7 MRG](https://www.ris.bka.gv.at/NormDokument.wxe?Abfrage=Bundesnormen&Gesetzesnummer=10002531&Paragraf=16) |
+| `at.mrg.angemessenPermitAfter` | permit after 1945-05-08 → angemessener Mietzins | § 16 Abs. 1 Z 2 MRG |
+| `at.mrg.angemessenMinAreaM2` | Kategorie A/B over 130 m² → angemessener Mietzins | § 16 Abs. 1 Z 4 MRG |
+
+All three checked in the § 16 version in force since 2026-01-01 (BGBl. I Nr. 114/2025), valid from 2025-04-01 (the engine's coverage start).
+
+How the engine applies it (`rentCap` in the output):
+- **noCap:** the MRG is excluded or applies only partly.
+- **angemessen:** the building was newly built under a permit after 8 May 1945 (Z 2; e.g. a whole building permitted 1945–1953, or a publicly funded one), or the flat has more than 130 m² (Z 4; only for Kategorie A or B and if re-let within six months). The angemessener Mietzins is set by comparison with similar flats and is not computed. Z 4 is not applied to whole buildings, whose floor area is the total.
+- **richtwert:** the base is Richtwert × usable floor area, rounded half up to the cent; for a fixed-term lease, Richtwert × area × 75%, rounded once. Without `rent.fixedTerm` the open-ended base is compared and the fixed-term base reported alongside. For a whole building the base is the total over all flats.
+- **unknown:** `property.state` or `property.livingAreaM2` missing, or no Richtwert published for the date.
+- **Not computed:** Zuschläge (balcony, lift, above-standard features, an above-average location disclosed in writing; no location surcharge in areas dominated by pre-1917 buildings with mostly Kategorie D flats, § 2 Abs. 3 RichtWG), Abschläge (Kategorie B or C, lower standards, poor condition), Kategorie D flats (a fixed amount per m²), listed buildings (Z 3) and units created by later conversions or extensions after 1945 (Z 2).
+- Tenants can challenge an excessive rent within three years; for a fixed-term lease the period ends no earlier than six months after the lease ends (§ 16 Abs. 8 MRG).
+
+Flags:
+- `rent.fullMrg`: high (permit date) or warn (estimated) when the rent may exceed the cap; **info** when the Richtwert base is computed and the rent is within it.
+- `rent.aboveRichtwert` (warn): the MRG status is unknown, and the rent exceeds the Richtwert base that would apply if the MRG applied in full.
 
 ### Calculations
 
@@ -247,7 +288,8 @@ The output lists which assumptions were defaulted, and flags the ones that move 
 - Verify the base rules (§ 4–5 GrEStG, § 26 GGG) and model assumed liabilities.
 - Extend coverage before 2025-04-01 if historical analysis is needed.
 - Check the Wirtschaftskammer's 2024 notice for the €1.06 reserve amount; add the 2028 amount when published (by November 2027).
-- Compute Richtwert caps for fully regulated flats (Richtwerte per Bundesland via RIS).
+- Add the Richtwerte from 2027-04-01 when Statistik Austria publishes them.
+- Richtwert Zuschläge and Abschläge, Kategorie D amounts, and the angemessener Mietzins are not modelled.
 - Add the 2028 tariff amounts when they are published.
 - Check the statute text of the temporary AfA for buildings completed 2024–2026 before modelling it.
 - Check the tax treatment of the mortgage registration fee (§ 19 Abs. 3 EStG) against the EStR and case law.

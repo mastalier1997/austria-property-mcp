@@ -5,7 +5,7 @@ An MCP server for Austrian residential property. It gives AI agents deterministi
 | Tool | What it does |
 |---|---|
 | `estimate_acquisition_costs` | Costs on top of the purchase price: Grunderwerbsteuer, land-register court fees, broker commission with a check against the legal maximum, contract costs |
-| `underwrite_property` | Buy-to-let analysis: acquisition costs, loan payment, monthly cash flow before and after income tax, yields, DSCR, break-even rent, whether MRG rent caps apply, depreciation (AfA) with the legal land share, a 25-year Liebhaberei check, risk flags |
+| `underwrite_property` | Buy-to-let analysis: acquisition costs, loan payment, monthly cash flow before and after income tax, yields, DSCR, break-even rent, whether MRG rent caps apply and the Richtwert cap, depreciation (AfA) with the legal land share, a 25-year Liebhaberei check, risk flags |
 | `get_rules` | The statutory values and default assumptions behind the numbers, with legal basis, source links and verification dates |
 
 Rules are versioned by date (for example the court-fee changes of 1 August 2026), covering valuation dates from 2025-04-01 to 2027-12-31.
@@ -45,7 +45,7 @@ The agent gets a short summary (cash flow before and after tax, yields, break-ev
 
 - Calculations only, not investment, tax or legal advice.
 - Income tax uses a flat marginal rate, or the exact § 33 tariff when the other taxable income is given; tax credits are ignored. Rent, costs and interest are held constant.
-- The rent-regulation check uses building size, permit dates and public funding; it does not compute the Richtwert.
+- The rent-regulation check uses building size, permit dates and public funding. The Richtwert cap is the base amount; surcharges and deductions (Zuschläge/Abschläge) and the angemessener Mietzins are not computed.
 
 Rule catalogue and sources: [docs/rules.md](https://github.com/mastalier1997/austria-property-mcp/blob/main/docs/rules.md).
 

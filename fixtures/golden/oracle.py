@@ -305,6 +305,47 @@ def land_share(tax_in, prop):
     share = F(30, 100) if (units is not None and units > 10) else F(40, 100)
     return share, shown_large and units is not None
 
+# Richtwerte, cents per m² per month: (1 Apr 2023 - 31 Mar 2026, 1 Apr 2026 - 31 Mar 2027)
+RICHTWERTE = {
+    "burgenland": (609, 615), "kaernten": (781, 789), "niederoesterreich": (685, 692),
+    "oberoesterreich": (723, 730), "salzburg": (922, 931), "steiermark": (921, 930),
+    "tirol": (814, 822), "vorarlberg": (1025, 1035), "wien": (667, 674),
+}
+
+def rent_cap(prop, fixed_term, rent, date, mrg_status):
+    """§ 16 MRG: Richtwert base, or why it does not apply."""
+    out = {"status": None, "richtwertPerM2Cents": None, "openEndedBaseCents": None,
+           "fixedTermBaseCents": None, "applicableBaseCents": None, "rentToBasePct": None}
+    if mrg_status in ("excluded", "partial"):
+        return {**out, "status": "noCap"}
+    if "buildingPermitDate" in prop:
+        post_war = prop["buildingPermitDate"] > "1945-05-08"
+    elif "buildingYear" in prop:
+        y = prop["buildingYear"]
+        post_war = False if y <= 1944 else (True if y >= 1950 else None)
+    else:
+        post_war = None
+    if post_war:
+        return {**out, "status": "angemessen"}  # § 16 Abs. 1 Z 2
+    area = to_cents(prop["livingAreaM2"]) if "livingAreaM2" in prop else None  # hundredths of m²
+    if prop.get("ownership") != "wholeBuilding" and area is not None and area > 130 * 100:
+        return {**out, "status": "angemessen"}  # § 16 Abs. 1 Z 4, per flat
+    if "state" not in prop or area is None:
+        return {**out, "status": "unknown"}
+    pair = RICHTWERTE[prop["state"]]
+    if "2023-04-01" <= date <= "2026-03-31":
+        rw = pair[0]
+    elif "2026-04-01" <= date <= "2027-03-31":
+        rw = pair[1]
+    else:
+        return {**out, "status": "unknown"}
+    open_ended = round_half_up(F(rw * area, 100))
+    fixed = round_half_up(F(rw * area, 100) * F(3, 4))
+    applicable = fixed if fixed_term is True else open_ended
+    return {"status": "richtwert", "richtwertPerM2Cents": rw, "openEndedBaseCents": open_ended,
+            "fixedTermBaseCents": fixed, "applicableBaseCents": applicable,
+            "rentToBasePct": two_dec(F(rent * 100, applicable))}
+
 def underwrite(case):
     i = case["input"]
     date = i["valuationDate"]
@@ -390,10 +431,20 @@ def underwrite(case):
     deriv.append(f"NOI {eur(D(noi) / 100)}, cash flow {eur(D(cf) / 100)} a month, break-even rent {eur(D(be) / 100) if be is not None else '-'}")
 
     status_mrg, basis = rent_regulation(prop)
+    cap = rent_cap(prop, i["rent"].get("fixedTerm"), rent, date, status_mrg)
+    above = cap["status"] == "richtwert" and rent > cap["applicableBaseCents"]
+    full_severity = None
     if status_mrg == "full":
         flags.append("rent.fullMrg")
+        within = cap["status"] == "richtwert" and not above
+        full_severity = "info" if within else ("high" if basis == "permitDate" else "warn")
     elif status_mrg == "unknown":
         flags.append("rent.regulationUnknown")
+        if above:
+            flags.append("rent.aboveRichtwert")
+    if cap["status"] == "richtwert":
+        deriv.append(f"Richtwert: {eur(D(cap['richtwertPerM2Cents']) / 100)}/m² × {area / 100} m² = {eur(D(cap['openEndedBaseCents']) / 100)} "
+                     f"(fixed-term −25%: {eur(D(cap['fixedTermBaseCents']) / 100)}); rent is {cap['rentToBasePct']}% of {eur(D(cap['applicableBaseCents']) / 100)}")
     elif basis == "buildingYear":
         flags.append("rent.regulationEstimated")
     if prop.get("publicFunding") is True:
@@ -508,6 +559,8 @@ def underwrite(case):
             "operating": lines,
             "metrics": metrics,
             "rentRegulation": {"status": status_mrg, "basis": basis},
+            "rentCap": cap,
+            "fullMrgSeverity": full_severity,
             "tax": tax,
             "flags": sorted(flags),
         },
@@ -659,10 +712,70 @@ UW_CASES += [
                "tax": {"otherTaxableIncome": 35836}}},
 ]
 
-HISTORY = {
-    c["name"]: ["Engine 0.3.0: added expected.tax and the tax flags (assumption.taxRate, assumption.landShare, tax.*) for the new tax module. Earlier expectations unchanged."]
-    for c in UW_CASES[:9]
-}
+TAX_NOTE = "Engine 0.3.0: added expected.tax and the tax flags (assumption.taxRate, assumption.landShare, tax.*) for the new tax module. Earlier expectations unchanged."
+CAP_NOTE = "Engine 0.4.0: added expected.rentCap and expected.fullMrgSeverity for the Richtwert cap. Earlier expectations unchanged."
+HISTORY = {c["name"]: [TAX_NOTE, CAP_NOTE] for c in UW_CASES[:9]}
+HISTORY.update({c["name"]: [CAP_NOTE] for c in UW_CASES[9:]})
+
+# Cases added in engine 0.4.0 (Richtwert cap)
+UW_CASES += [
+    {"name": "wien-altbau-richtwert-fixed-term",
+     "description": "Gründerzeit condo in Vienna (permit 1905), 68 m², fixed-term lease: Richtwert €6.74 × 68 m² less 25% = €343.74, far below the assumed rent.",
+     "input": {"valuationDate": "2026-10-18", "purchasePrice": 340000,
+               "broker": {"commissionPct": 3, "sellerPaysCommission": True},
+               "financing": {"loanAmount": 220000, "ratePct": 3.7, "termYears": 30},
+               "property": {"livingAreaM2": 68, "ownership": "condominium", "buildingPermitDate": "1905-06-01", "state": "wien"},
+               "rent": {"netColdMonthly": 980, "operatingCostsMonthly": 210, "fixedTerm": True},
+               "ownerCosts": {"reserveFundMonthly": 95}}},
+    {"name": "graz-altbau-within-richtwert",
+     "description": "Altbau condo in Graz (permit 1910), 55 m², open-ended lease: rent €480 within the Richtwert base of €9.30 × 55 m² = €511.50.",
+     "input": {"valuationDate": "2026-10-18", "purchasePrice": 165000, "broker": "none",
+               "financing": {"loanAmount": 100000, "ratePct": 3.6, "termYears": 25},
+               "property": {"livingAreaM2": 55, "ownership": "condominium", "buildingPermitDate": "1910-01-01", "state": "steiermark"},
+               "rent": {"netColdMonthly": 480, "operatingCostsMonthly": 140, "fixedTerm": False},
+               "ownerCosts": {"reserveFundMonthly": 70}}},
+    {"name": "richtwert-day-before-april-2026",
+     "description": "Valuation date 2026-03-31: the 2023 Richtwert (Wien €6.67) still applies; fixed-term base of 47.5 m² rounds half up.",
+     "input": {"valuationDate": "2026-03-31", "purchasePrice": 230000, "broker": "none",
+               "property": {"livingAreaM2": 47.5, "ownership": "condominium", "buildingPermitDate": "1890-01-01", "state": "wien"},
+               "rent": {"netColdMonthly": 640, "operatingCostsMonthly": 150, "fixedTerm": True},
+               "ownerCosts": {"reserveFundMonthly": 60}}},
+    {"name": "richtwert-on-april-2026",
+     "description": "Same flat on 2026-04-01: the Richtwert rises by the capped 1% to €6.74.",
+     "input": {"valuationDate": "2026-04-01", "purchasePrice": 230000, "broker": "none",
+               "property": {"livingAreaM2": 47.5, "ownership": "condominium", "buildingPermitDate": "1890-01-01", "state": "wien"},
+               "rent": {"netColdMonthly": 640, "operatingCostsMonthly": 150, "fixedTerm": True},
+               "ownerCosts": {"reserveFundMonthly": 60}}},
+    {"name": "large-altbau-angemessen",
+     "description": "145 m² Altbau flat in Vienna: over 130 m², so the angemessener Mietzins applies (§ 16 Abs. 1 Z 4), not computed.",
+     "input": {"valuationDate": "2026-10-18", "purchasePrice": 890000,
+               "broker": {"commissionPct": 3, "sellerPaysCommission": True},
+               "financing": {"loanAmount": 600000, "ratePct": 3.6, "termYears": 30},
+               "property": {"livingAreaM2": 145, "ownership": "condominium", "buildingPermitDate": "1900-01-01", "state": "wien"},
+               "rent": {"netColdMonthly": 2900, "operatingCostsMonthly": 400},
+               "ownerCosts": {"reserveFundMonthly": 200}}},
+    {"name": "whole-building-1950-angemessen",
+     "description": "Whole rental building permitted 1950 without public funds: full MRG (before mid-1953), but the angemessener Mietzins applies (§ 16 Abs. 1 Z 2).",
+     "input": {"valuationDate": "2026-10-18", "purchasePrice": 1500000,
+               "broker": {"commissionPct": 3, "sellerPaysCommission": True},
+               "financing": {"loanAmount": 1000000, "ratePct": 3.8, "termYears": 25},
+               "property": {"livingAreaM2": 620, "ownership": "wholeBuilding", "buildingPermitDate": "1950-03-01",
+                            "publicFunding": False, "unitsInBuilding": 9, "state": "wien"},
+               "rent": {"netColdMonthly": 7400, "operatingCostsMonthly": 1600},
+               "ownerCosts": {"maintenanceMonthly": 1000}}},
+    {"name": "unknown-mrg-above-richtwert",
+     "description": "Vienna condo with no permit date or build year: MRG status unknown, and the rent is far above the Richtwert base that would apply if the MRG applied in full.",
+     "input": {"valuationDate": "2026-10-18", "purchasePrice": 260000, "broker": "none",
+               "property": {"livingAreaM2": 50, "ownership": "condominium", "state": "wien"},
+               "rent": {"netColdMonthly": 900, "operatingCostsMonthly": 160},
+               "ownerCosts": {"reserveFundMonthly": 60}}},
+    {"name": "richtwert-2027-not-published",
+     "description": "Valuation date 2027-05-01: the Richtwerte from 1 April 2027 are not published yet, so the cap is unknown.",
+     "input": {"valuationDate": "2027-05-01", "purchasePrice": 280000, "broker": "none",
+               "property": {"livingAreaM2": 62, "ownership": "condominium", "buildingPermitDate": "1898-01-01", "state": "wien"},
+               "rent": {"netColdMonthly": 650, "operatingCostsMonthly": 170},
+               "ownerCosts": {"reserveFundMonthly": 75}}},
+]
 
 UW_OUT = ROOT / "underwrite"
 UW_OUT.mkdir(parents=True, exist_ok=True)

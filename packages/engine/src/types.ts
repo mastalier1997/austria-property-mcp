@@ -4,6 +4,7 @@ import type {
   OperatingAssumptionId,
   UnderwriteAssumptions,
 } from "./assumptions.js";
+import type { AustrianState, RentCap } from "./calc/rentCap.js";
 import type { Ownership, RentRegulation } from "./calc/rentRegulation.js";
 import type { Citation } from "./citations.js";
 import type { IsoDate } from "./dates.js";
@@ -82,6 +83,7 @@ export type FlagId =
   | "rent.regulationUnknown"
   | "rent.regulationEstimated"
   | "rent.publicFunding"
+  | "rent.aboveRichtwert"
   | "assumption.taxRate"
   | "assumption.landShare"
   | "tax.liebhabereiRisk"
@@ -148,6 +150,8 @@ export interface PropertyInput {
   publicFunding?: boolean;
   /** Number of separate flats or business units in the building. */
   unitsInBuilding?: number;
+  /** Bundesland, for the Richtwert (e.g. "wien", "steiermark"). */
+  state?: AustrianState;
 }
 
 export interface RentInput {
@@ -155,6 +159,8 @@ export interface RentInput {
   netColdMonthly: number;
   /** Monthly operating costs (Betriebskosten) passed on to the tenant, in EUR. */
   operatingCostsMonthly?: number;
+  /** Whether the lease is fixed-term (befristet). A fixed term lowers the MRG rent cap by 25%. */
+  fixedTerm?: boolean;
 }
 
 export interface OwnerCostsInput {
@@ -355,6 +361,8 @@ export interface UnderwriteResult {
   operating: OperatingLine[];
   metrics: UnderwriteMetrics;
   rentRegulation: RentRegulation;
+  /** The MRG cap on the net cold rent: the Richtwert base, or why it does not apply. */
+  rentCap: RentCap;
   /** Income tax on the rental result, AfA, after-tax cash flow and the Liebhaberei check. */
   tax: TaxResult;
   /** All flags, including those from the acquisition-cost calculation. */

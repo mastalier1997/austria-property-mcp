@@ -29,6 +29,15 @@ interface GoldenUnderwrite {
       breakEvenRentPerM2: number | null;
     };
     rentRegulation: { status: string; basis: string };
+    rentCap: {
+      status: string;
+      richtwertPerM2Cents: number | null;
+      openEndedBaseCents: number | null;
+      fixedTermBaseCents: number | null;
+      applicableBaseCents: number | null;
+      rentToBasePct: number | null;
+    };
+    fullMrgSeverity: string | null;
     tax: {
       method: string;
       marginalRatePct: number;
@@ -51,7 +60,7 @@ const cases: GoldenUnderwrite[] = readdirSync(dir)
 
 describe("golden underwriting cases", () => {
   it("has fixtures", () => {
-    expect(cases.length).toBeGreaterThanOrEqual(18);
+    expect(cases.length).toBeGreaterThanOrEqual(26);
   });
 
   it.each(cases.map((c) => [c.name, c] as const))("%s", (_name, golden) => {
@@ -74,6 +83,9 @@ describe("golden underwriting cases", () => {
     expect(result.metrics.annualCashFlowCents).toBe(e.metrics.monthlyCashFlowCents * 12);
 
     expect({ status: result.rentRegulation.status, basis: result.rentRegulation.basis }).toEqual(e.rentRegulation);
+
+    expect(result.rentCap).toMatchObject(e.rentCap);
+    expect(result.flags.find((f) => f.id === "rent.fullMrg")?.severity ?? null).toBe(e.fullMrgSeverity);
 
     const t = result.tax;
     expect(t.method).toBe(e.tax.method);
