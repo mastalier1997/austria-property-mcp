@@ -1,2 +1,2 @@
 /** Keep in sync with packages/engine/package.json (checked by a test). */
-export const ENGINE_VERSION = "0.1.0";
+export const ENGINE_VERSION = "0.2.0";

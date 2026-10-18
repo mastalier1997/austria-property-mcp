@@ -2,7 +2,7 @@
 
 Every statutory number the engine uses, where it comes from, and how it was checked. The code is the source of truth (`packages/engine/src/rules/`); a test fails if a rule id is missing from this page.
 
-**Coverage:** valuation dates from **2025-04-01** onward. Earlier dates throw `RuleNotCoveredError`, because the court-fee amounts before the April 2025 valorisation have not been verified.
+**Coverage:** valuation dates from **2025-04-01** to **2027-12-31**. Earlier dates throw `RuleNotCoveredError`, because the court-fee amounts before the April 2025 valorisation have not been verified. From 2028 the statutory minimum repair reserve is re-indexed; until that amount is added, underwriting needs `ownerCosts.reserveFundMonthly` for 2028 dates.
 
 **Last full check:** 2026-10-18, against the statute texts in RIS.
 
@@ -64,6 +64,62 @@ Flags:
 
 Applied to broker commission and contract fees. Checked in the version in force since 2026-07-01.
 
+## Underwriting
+
+### Repair reserve (WEG)
+
+| Rule id | Value | Valid | Legal basis |
+|---|---|---|---|
+| `at.weg.minReservePerM2` | €0.90 per m² per month | 2022-07-01 – 2023-12-31 | [§ 31 Abs. 1 WEG 2002](https://www.ris.bka.gv.at/NormDokument.wxe?Abfrage=Bundesnormen&Gesetzesnummer=20001921&Paragraf=31) idF BGBl. I Nr. 222/2021 |
+| `at.weg.minReservePerM2` | €1.06 per m² per month | 2024-01-01 – 2025-12-31 | § 31 WEG, valorised; amount from [ÖVI](https://www.ovi.at/aktuelles/detailansicht/anhebung-der-mindestruecklage-1-1-2026) |
+| `at.weg.minReservePerM2` | €1.12 per m² per month | 2026-01-01 – 2027-12-31 | § 31 WEG, valorised; [Wirtschaftskammer notice](https://www.wko.at/information-consulting/immobilien-vermoegenstreuhaender/mindestruecklage-wohnungseigentumsgesetz) of 2025-09-10 |
+
+- The statute sets €0.90 and links it to VPI 2020 every second year from 2024 (base June 2021 = 102.6). The Wirtschaftskammer publishes each new amount. 2026: 0.90 × 128.1 / 102.6 = €1.1237 → €1.12.
+- The 2024 amount comes from the property association ÖVI; the Wirtschaftskammer's 2024 notice itself has not been checked.
+- Used only when the flat's reserve contribution is not given, for condominiums (or when ownership is unknown, with a flag). Applied to the flat's own floor area; the real share follows the co-ownership ratio.
+
+### Rent regulation (MRG)
+
+| Rule id | Value | Legal basis |
+|---|---|---|
+| `at.mrg.condominiumPermitAfter` | permit after 1945-05-08 | [§ 1 Abs. 4 Z 3 MRG](https://www.ris.bka.gv.at/NormDokument.wxe?Abfrage=Bundesnormen&Gesetzesnummer=10002531&Paragraf=1) |
+| `at.mrg.newBuildingPermitAfter` | permit after 1953-06-30, built without public funds | § 1 Abs. 4 Z 1 MRG |
+| `at.mrg.exclusionMaxUnits` | at most 2 units in the building | § 1 Abs. 2 Z 5 MRG |
+
+All three valid from 2025-04-01 (the engine's coverage start; earlier versions not checked).
+
+How the check works:
+- **Excluded:** a building with at most two separate units (a house counts as one) is outside the MRG; rent is free.
+- **Partial:** a condominium whose building permit is after 8 May 1945, or a building newly built without public funds with a permit after 30 June 1953. Only §§ 14, 16b, 29–36, 45, 46 and 49 apply, so § 16's rent caps do not. Tenancy protection still applies.
+- **Full:** otherwise. Rent is capped at the Richtwert or the angemessener Mietzins (§ 16); the engine flags this but does not compute the cap yet.
+- **Unknown:** when the inputs don't settle it (no permit date or build year, unknown ownership, or unknown public funding for a whole building).
+- **Build year as an estimate** (heuristic): without a permit date, a building completed at least one year before the cut-off year counts as permitted before it, one completed at least five years after as permitted after it; years in between stay unknown. Results based on the build year are marked as estimates.
+- Not checked: attic conversions and extensions (§ 1 Abs. 4 Z 2, 2a), other exclusions, and subsidy rules. A publicly funded building gets its own flag.
+
+### Calculations
+
+- **Loan payment:** constant-rate annuity with monthly payments, monthly rate = annual rate ÷ 12. Computed exactly with rational arithmetic and rounded half up to the cent. Interest each month = balance × monthly rate, rounded half up; the final payment absorbs rounding.
+- **NOI (monthly):** net cold rent − vacancy − management − repair reserve − owner's maintenance. Operating costs pass through to the tenant, except during vacancy.
+- **Vacancy:** `vacancyPct` × (net cold rent + operating costs), because the owner pays the operating costs of an empty flat.
+- **Cash flow:** NOI − loan payment, before income tax.
+- **Gross yield:** annual net cold rent ÷ purchase price.
+- **Net yield:** annual NOI ÷ (price + acquisition costs).
+- **Cash-on-cash:** annual cash flow ÷ equity, where equity = price + acquisition costs − loan. Empty if equity ≤ 0.
+- **DSCR:** NOI ÷ loan payment.
+- **Break-even rent:** the net cold rent at which cash flow is zero, (payment + reserve + maintenance + vacancy × operating costs) ÷ (1 − vacancy − management), rounded up to the cent.
+- Percentages and ratios are rounded to two decimals, half away from zero.
+
+### Heuristic thresholds
+
+Rules of thumb for flags, not law (`HEURISTICS` in code):
+
+| Flag | Threshold |
+|---|---|
+| `financing.highLtv` | loan above 80% of the price (high severity above 100%) |
+| `financing.thinDscr` | DSCR at least 1.0 but below 1.2 |
+| `cashflow.negative` | monthly cash flow below zero |
+| `cashflow.operatingLoss` | NOI below zero |
+
 ## Assumptions
 
 Not set by law; every one can be overridden in `assumptions`.
@@ -74,8 +130,11 @@ Not set by law; every one can be overridden in `assumptions`.
 | `mortgageRegistrationFactor` | 1.3 × loan | [Hypo Tirol HIKrG information sheet](https://www.hypotirol.com/fileadmin/oesterreich/download/pdf/recht/hypo_tirol_informationsblatt_hypothekar_und_immobilienkreditgesetz_HIKrG.pdf): usually about 30% above the loan |
 | `grundbuchFiling` | `electronic` | Purchase handled by a lawyer or notary |
 | `grundbuchApplications` | 1 | Ownership and mortgage filed together |
+| `vacancyPct` | 4% of gross rent | [GELD-Magazin 02/2021](https://www.infina.at/fileadmin/content/Presse/202102_GELD_Magazin_Anlegerwohnungen_Richtig_kalkulieren.pdf), tax adviser C. Klausner: 3–5% of gross annual rent |
+| `maintenancePctPerYear` | 0.2% of price + acquisition costs | Same article: 0.2% of acquisition costs per year |
+| `managementPct` | 0% of net cold rent | Owner manages the letting |
 
-The output lists which assumptions were defaulted, and flags the two that move the total most.
+The output lists which assumptions were defaulted, and flags the ones that move the result most.
 
 ## Money handling
 
@@ -88,18 +147,23 @@ The output lists which assumptions were defaulted, and flags the two that move t
 - The purchase price is the base everywhere. Separately priced furniture, assumed liabilities and the exact base rules (§ 5 GrEStG, § 26 GGG) are not modelled yet.
 - No exemptions, e.g. the time-limited Grundbuch fee exemption for buying a primary residence. The engine targets buy-to-let.
 - Rules are applied as valid on `valuationDate`. Grundbuch fees really depend on when the fee claim arises, usually at registration.
-- Bank fees, valuation fees, signature certification and loan interest are not included.
+- Bank fees, valuation fees and signature certification are not included in acquisition costs.
+- Cash flow is before income tax; AfA and rental-income tax come later.
+- Rent, costs and the interest rate are held constant; no indexation or rate resets.
+- Rent inputs are net of VAT; VAT on rent is not modelled.
 
 ## Open checks
 
 - Cross-check the golden cases against a public calculator (e.g. durchblicker) and record the differences.
 - Verify the base rules (§ 4–5 GrEStG, § 26 GGG) and model assumed liabilities.
 - Extend coverage before 2025-04-01 if historical analysis is needed.
+- Check the Wirtschaftskammer's 2024 notice for the €1.06 reserve amount; add the 2028 amount when published (by November 2027).
+- Compute Richtwert caps for fully regulated flats (Richtwerte per Bundesland via RIS).
 
 ## Adding or changing a rule
 
 1. Find the provision in RIS and, for valorised amounts, the regulation in the Bundesgesetzblatt.
 2. Add a new version with `validFrom`; close the previous one with `validTo` the day before. `validateCatalogue()` rejects overlaps and gaps.
 3. Set `verifiedOn` and write in `note` exactly what was checked.
-4. Add a date-boundary test and regenerate the golden cases with `python3 fixtures/golden/oracle.py fixtures/golden/acquisition` after updating the oracle.
+4. Add a date-boundary test and regenerate the golden cases with `python3 fixtures/golden/oracle.py fixtures/golden` after updating the oracle.
 5. Update this page.

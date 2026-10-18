@@ -1,7 +1,7 @@
 import { METHOD_CITATIONS, type Citation } from "../citations.js";
 import type { IsoDate } from "../dates.js";
 import { divRound, PPM_PER_UNIT, type Cents } from "../money.js";
-import { getRule, type RuleId } from "../rules/index.js";
+import { getNumericRule, type RuleId } from "../rules/index.js";
 
 export interface BrokerCap {
   /** Maximum commission per party, excluding USt, in cents (rounded half up). */
@@ -22,10 +22,10 @@ export interface BrokerCap {
  * gives the flat €1,453.46 band (up to €48,448.56, where 3% catches up).
  */
 export function brokerCap(valueCents: Cents, date: IsoDate): BrokerCap {
-  const limit = getRule("at.makler.lowerBracketLimit", date);
-  const lower = getRule("at.makler.lowerBracketRate", date);
-  const upper = getRule("at.makler.upperBracketRate", date);
-  const oneSided = getRule("at.makler.oneSidedIncrease", date);
+  const limit = getNumericRule("at.makler.lowerBracketLimit", date);
+  const lower = getNumericRule("at.makler.lowerBracketRate", date);
+  const upper = getNumericRule("at.makler.upperBracketRate", date);
+  const oneSided = getNumericRule("at.makler.oneSidedIncrease", date);
 
   // Exact caps in cents × ppm, compared before any rounding.
   const value = BigInt(valueCents);

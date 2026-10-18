@@ -19,17 +19,17 @@ import {
   type Cents,
   type Ppm,
 } from "../money.js";
-import { getRule, type Rule, type RuleId } from "../rules/index.js";
+import type { NumericRule, RuleId } from "../rules/index.js";
 import type {
   AcquisitionCostsInput,
   AcquisitionCostsResult,
   Flag,
   LineItem,
   LineItemId,
-  RuleUsed,
 } from "../types.js";
 import { ENGINE_VERSION } from "../version.js";
 import { brokerCap } from "./brokerCap.js";
+import { cite, RuleTracker } from "./ruleTracker.js";
 
 /** Largest price or loan accepted, in cents (€1 billion). */
 const MAX_AMOUNT_CENTS = 100_000_000_000;
@@ -186,10 +186,6 @@ function courtFeeCents(baseCents: Cents, rate: Ppm): Cents {
   return Number(feeEuros) * 100;
 }
 
-function cite(rule: Rule): Citation {
-  return { legalBasis: rule.legalBasis, sourceUrl: rule.sourceUrl };
-}
-
 /**
  * One-off costs of buying an Austrian residential property: Grunderwerbsteuer,
  * Grundbuch fees, broker commission and contract costs.
@@ -202,20 +198,8 @@ export function acquisitionCosts(input: AcquisitionCostsInput): AcquisitionCosts
   const n = normalise(input);
   const { date, priceCents, assumptions } = n;
 
-  const used = new Map<string, RuleUsed>();
-  const use = (id: RuleId): Rule => {
-    const rule = getRule(id, date);
-    const usedEntry: RuleUsed = {
-      id: rule.id,
-      value: rule.value,
-      unit: rule.unit,
-      validFrom: rule.validFrom,
-      verifiedOn: rule.verifiedOn,
-    };
-    if (rule.validTo !== undefined) usedEntry.validTo = rule.validTo;
-    used.set(`${rule.id}@${rule.validFrom}`, usedEntry);
-    return rule;
-  };
+  const tracker = new RuleTracker(date);
+  const use = (id: RuleId): NumericRule => tracker.numeric(id);
 
   const items: LineItem[] = [];
   const flags: Flag[] = [];
@@ -431,7 +415,7 @@ export function acquisitionCosts(input: AcquisitionCostsInput): AcquisitionCosts
     flags,
     assumptionsUsed: { ...assumptions },
     assumptionsDefaulted: n.assumptionsDefaulted,
-    rulesUsed: [...used.values()].sort((a, b) => a.id.localeCompare(b.id)),
+    rulesUsed: tracker.list(),
     limitations: [...LIMITATIONS],
     disclaimer: DISCLAIMER,
   };

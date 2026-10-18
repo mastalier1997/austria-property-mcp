@@ -2,30 +2,39 @@
 
 A deterministic underwriting engine for Austrian residential buy-to-let property. Every number it returns cites its legal source. AI agents use it through MCP, and apps through an HTTP API.
 
-> **Status: M1.** Acquisition costs work and are tested against verified rules (see [docs/rules.md](docs/rules.md)). Underwriting and the MCP server come next. See [docs/plan.md](docs/plan.md) for the milestones.
+> **Status: M2.** Acquisition costs and underwriting (loan, cash flow, yields, break-even, rent-regulation check) work and are tested against verified rules (see [docs/rules.md](docs/rules.md)). The MCP server comes next. See [docs/plan.md](docs/plan.md) for the milestones.
 
 ## Example
 
 ```ts
-import { acquisitionCosts } from "@austria-property/engine";
+import { underwrite } from "@austria-property/engine";
 
-const result = acquisitionCosts({
+const result = underwrite({
   valuationDate: "2026-10-18",
-  purchasePrice: 250_000,
+  purchasePrice: 269_000,
   broker: { commissionPct: 3, sellerPaysCommission: true },
-  financing: { loanAmount: 200_000 },
+  financing: { loanAmount: 174_850, ratePct: 3.9, termYears: 25 },
+  property: { livingAreaM2: 54, ownership: "condominium", buildingYear: 1978 },
+  rent: { netColdMonthly: 795, operatingCostsMonthly: 132 },
+  ownerCosts: { reserveFundMonthly: 41 },
 });
 
-result.total;            // 28151
-result.totalPctOfPrice;  // 11.26
-result.lineItems[1];     // Grundbuch ownership fee: €2,720, with calculation and legal basis
+result.acquisition.total;              // 29659 (acquisition costs, each line with its legal basis)
+result.financing?.monthlyPayment;      // 913.3
+result.metrics.monthlyCashFlow;        // -246.16 (before tax)
+result.metrics.breakEvenRentCents;     // 105142 → €1,051.42 rent needed to break even
+result.rentRegulation.status;          // "partial": no statutory rent cap (estimated from the build year)
+result.flags;                          // negative cash flow, assumptions used, ...
 ```
 
-## What it will do
+`acquisitionCosts()` gives just the purchase costs.
+
+## What it does
 
 - **Acquisition costs:** Grunderwerbsteuer, Grundbuch fees and broker commission, using the rules valid on a given date.
-- **Underwriting:** financing, cash flow, gross and net yield, cash-on-cash return, break-even rent and DSCR.
-- **Risk flags:** negative cash flow, high LTV, missing inputs, and signs that rent regulation (MRG) may apply.
+- **Underwriting:** loan payment, cash flow, gross and net yield, cash-on-cash return, break-even rent and DSCR.
+- **Rent regulation:** whether the MRG caps the rent, from the building permit date, ownership type and building size.
+- **Risk flags:** negative cash flow, high LTV, thin debt cover, missing inputs, and rent that may exceed a legal cap.
 - **Sources:** every statutory line item carries its legal basis and a source URL, so an agent can cite it.
 
 ## Development

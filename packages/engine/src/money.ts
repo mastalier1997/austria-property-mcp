@@ -63,6 +63,23 @@ export function pctToPpm(pct: number): Ppm | undefined {
   return ppm;
 }
 
+/**
+ * numerator / denominator with the given number of decimals, rounded half away
+ * from zero. Works for negative numerators (e.g. a negative cash flow).
+ */
+export function ratio(numerator: number, denominator: number, decimals = 2): number {
+  if (!(denominator > 0)) throw new RangeError("ratio expects a positive denominator");
+  const scale = 10n ** BigInt(decimals);
+  const magnitude = divRound(BigInt(Math.abs(numerator)) * scale, BigInt(denominator), "halfUp");
+  const value = Number(magnitude) / Number(scale);
+  return numerator < 0 && value !== 0 ? -value : value;
+}
+
+/** numerator / denominator as a percentage with two decimals (e.g. 4.56 for 4.56%). */
+export function percent(numerator: number, denominator: number): number {
+  return ratio(numerator * 100, denominator, 2);
+}
+
 export function centsToEur(cents: Cents): number {
   return cents / 100;
 }

@@ -1,0 +1,59 @@
+{
+  "name": "cash-purchase-1962-permit",
+  "description": "Cash purchase, condo with a 1962 building permit: no rent cap, no loan metrics.",
+  "input": {
+    "valuationDate": "2026-10-18",
+    "purchasePrice": 150000,
+    "broker": "none",
+    "property": {
+      "livingAreaM2": 50,
+      "ownership": "condominium",
+      "buildingPermitDate": "1962-03-01"
+    },
+    "rent": {
+      "netColdMonthly": 700,
+      "operatingCostsMonthly": 150
+    },
+    "ownerCosts": {
+      "reserveFundMonthly": 60
+    },
+    "assumptions": {
+      "vacancyPct": 3,
+      "maintenancePctPerYear": 0.3,
+      "contractFeePct": 1.2
+    }
+  },
+  "expected": {
+    "acquisitionTotalCents": 909100,
+    "financing": null,
+    "operating": {
+      "rent": 70000,
+      "vacancy": 2550,
+      "reserveFund": 6000,
+      "maintenance": 3977
+    },
+    "metrics": {
+      "monthlyNoiCents": 57473,
+      "monthlyCashFlowCents": 57473,
+      "grossYieldPct": 5.6,
+      "netYieldPct": 4.34,
+      "cashOnCashPct": 4.34,
+      "dscr": null,
+      "totalInvestmentCents": 15909100,
+      "equityCents": 15909100,
+      "breakEvenRentCents": 10750,
+      "breakEvenRentPerM2": 2.15
+    },
+    "rentRegulation": {
+      "status": "partial",
+      "basis": "permitDate"
+    },
+    "flags": []
+  },
+  "derivation": [
+    "Vacancy: 3% × €850.00 = €25.50",
+    "Maintenance: 0.3% × €159,091.00 ÷ 12 = €39.77",
+    "NOI €574.73, cash flow €574.73 a month, break-even rent €107.50"
+  ],
+  "oracle": "Independent Python Fraction implementation (exact annuity, explicit rounding)."
+}

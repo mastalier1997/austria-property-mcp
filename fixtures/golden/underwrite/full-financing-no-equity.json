@@ -1,0 +1,73 @@
+{
+  "name": "full-financing-no-equity",
+  "description": "Loan covers price and costs: no equity, very high LTV, operating defaults.",
+  "input": {
+    "valuationDate": "2026-10-18",
+    "purchasePrice": 200000,
+    "broker": "none",
+    "financing": {
+      "loanAmount": 225000,
+      "ratePct": 4,
+      "termYears": 35
+    },
+    "property": {
+      "livingAreaM2": 48,
+      "ownership": "condominium",
+      "buildingYear": 2005
+    },
+    "rent": {
+      "netColdMonthly": 980,
+      "operatingCostsMonthly": 140
+    }
+  },
+  "expected": {
+    "acquisitionTotalCents": 1634100,
+    "financing": {
+      "monthlyPaymentCents": 99624,
+      "year1InterestCents": 894523,
+      "year1PrincipalCents": 300965,
+      "totalInterestCents": 19342370,
+      "ltvPct": 112.5
+    },
+    "operating": {
+      "rent": 98000,
+      "vacancy": 4480,
+      "reserveFund": 5376,
+      "maintenance": 3606
+    },
+    "metrics": {
+      "monthlyNoiCents": 84538,
+      "monthlyCashFlowCents": -15086,
+      "grossYieldPct": 5.88,
+      "netYieldPct": 4.69,
+      "cashOnCashPct": null,
+      "dscr": 0.85,
+      "totalInvestmentCents": 21634100,
+      "equityCents": -865900,
+      "breakEvenRentCents": 113715,
+      "breakEvenRentPerM2": 23.69
+    },
+    "rentRegulation": {
+      "status": "partial",
+      "basis": "buildingYear"
+    },
+    "flags": [
+      "assumption.contractFee",
+      "assumption.mortgageRegistration",
+      "assumption.operatingDefaults",
+      "assumption.reserveMinimum",
+      "cashflow.negative",
+      "financing.highLtv",
+      "financing.noEquity",
+      "rent.regulationEstimated"
+    ]
+  },
+  "derivation": [
+    "Loan: annuity €225,000.00 at 4% over 35 years = €996.24 a month",
+    "Vacancy: 4% × €1,120.00 = €44.80",
+    "Reserve: statutory minimum 112 ct/m² × 48.0 m² = €53.76",
+    "Maintenance: 0.2% × €216,341.00 ÷ 12 = €36.06",
+    "NOI €845.38, cash flow €-150.86 a month, break-even rent €1,137.15"
+  ],
+  "oracle": "Independent Python Fraction implementation (exact annuity, explicit rounding)."
+}

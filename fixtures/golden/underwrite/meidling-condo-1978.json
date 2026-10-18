@@ -1,0 +1,75 @@
+{
+  "name": "meidling-condo-1978",
+  "description": "The 'clean' mock listing: 54 m² condo built 1978, 65% loan at 3.9% over 25 years, reserve and operating costs from the listing.",
+  "input": {
+    "valuationDate": "2026-10-18",
+    "purchasePrice": 269000,
+    "broker": {
+      "commissionPct": 3,
+      "sellerPaysCommission": true
+    },
+    "financing": {
+      "loanAmount": 174850,
+      "ratePct": 3.9,
+      "termYears": 25
+    },
+    "property": {
+      "livingAreaM2": 54,
+      "ownership": "condominium",
+      "buildingYear": 1978
+    },
+    "rent": {
+      "netColdMonthly": 795,
+      "operatingCostsMonthly": 132
+    },
+    "ownerCosts": {
+      "reserveFundMonthly": 41
+    }
+  },
+  "expected": {
+    "acquisitionTotalCents": 2965900,
+    "financing": {
+      "monthlyPaymentCents": 91330,
+      "year1InterestCents": 674435,
+      "year1PrincipalCents": 421525,
+      "totalInterestCents": 9913795,
+      "ltvPct": 65.0
+    },
+    "operating": {
+      "rent": 79500,
+      "vacancy": 3708,
+      "reserveFund": 4100,
+      "maintenance": 4978
+    },
+    "metrics": {
+      "monthlyNoiCents": 66714,
+      "monthlyCashFlowCents": -24616,
+      "grossYieldPct": 3.55,
+      "netYieldPct": 2.68,
+      "cashOnCashPct": -2.39,
+      "dscr": 0.73,
+      "totalInvestmentCents": 29865900,
+      "equityCents": 12380900,
+      "breakEvenRentCents": 105142,
+      "breakEvenRentPerM2": 19.47
+    },
+    "rentRegulation": {
+      "status": "partial",
+      "basis": "buildingYear"
+    },
+    "flags": [
+      "assumption.contractFee",
+      "assumption.mortgageRegistration",
+      "assumption.operatingDefaults",
+      "cashflow.negative",
+      "rent.regulationEstimated"
+    ]
+  },
+  "derivation": [
+    "Loan: annuity €174,850.00 at 3.9% over 25 years = €913.30 a month",
+    "Vacancy: 4% × €927.00 = €37.08",
+    "Maintenance: 0.2% × €298,659.00 ÷ 12 = €49.78",
+    "NOI €667.14, cash flow €-246.16 a month, break-even rent €1,051.42"
+  ],
+  "oracle": "Independent Python Fraction implementation (exact annuity, explicit rounding)."
+}

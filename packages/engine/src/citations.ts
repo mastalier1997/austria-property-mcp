@@ -19,6 +19,12 @@ export const SOURCES = {
     "https://www.ris.bka.gv.at/NormDokument.wxe?Abfrage=Bundesnormen&Gesetzesnummer=10004873&Paragraf=10",
   bao204:
     "https://www.ris.bka.gv.at/NormDokument.wxe?Abfrage=Bundesnormen&Gesetzesnummer=10003940&Paragraf=204",
+  weg31:
+    "https://www.ris.bka.gv.at/NormDokument.wxe?Abfrage=Bundesnormen&Gesetzesnummer=20001921&Paragraf=31",
+  wkoReserve2026:
+    "https://www.wko.at/information-consulting/immobilien-vermoegenstreuhaender/mindestruecklage-wohnungseigentumsgesetz",
+  oviReserve2026: "https://www.ovi.at/aktuelles/detailansicht/anhebung-der-mindestruecklage-1-1-2026",
+  mrg1: "https://www.ris.bka.gv.at/NormDokument.wxe?Abfrage=Bundesnormen&Gesetzesnummer=10002531&Paragraf=1",
 } as const;
 
 const MAKLER = "Standes- und Ausübungsregeln für Immobilienmakler";

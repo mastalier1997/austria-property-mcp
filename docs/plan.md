@@ -194,6 +194,8 @@ Write tool descriptions for agents. Each should say when to call the tool, the u
 - **M0 done** (2026-10-18): workspace, CI.
 - **M1 done** (2026-10-18): rule model, 11 verified rules (14 versions), `acquisitionCosts`, 8 golden cases from an independent oracle, boundary and property tests. Still open: grow to 20–30 golden cases and cross-check against a public calculator (see docs/rules.md, "Open checks").
 
+- **M2 done** (2026-10-18): exact annuity loan, NOI, cash flow, gross and net yield, cash-on-cash, DSCR, break-even rent, MRG check (permit dates, building size, public funds), statutory minimum repair reserve, flags v0. 9 underwriting golden cases from the oracle, MRG and reserve date boundaries, property tests. Deviation from the sketch: inputs are grouped (`property`, `rent`, `ownerCosts`) and N/A metrics are `null`.
+
 ## Decided
 
 - **License: AGPL-3.0-only** (October 2026). Anyone who modifies the engine and offers it to others, including as a hosted service, must publish their changes under AGPL. Commercial licences without AGPL terms stay possible while all the code has a single author. Decide on a CLA before accepting outside contributions.

@@ -1,0 +1,73 @@
+{
+  "name": "altbau-full-mrg",
+  "description": "Gründerzeit condo (permit 1905): the MRG applies in full, so the assumed rent may be capped.",
+  "input": {
+    "valuationDate": "2026-10-18",
+    "purchasePrice": 320000,
+    "broker": {
+      "commissionPct": 3,
+      "sellerPaysCommission": true
+    },
+    "financing": {
+      "loanAmount": 200000,
+      "ratePct": 3.6,
+      "termYears": 30
+    },
+    "property": {
+      "livingAreaM2": 70,
+      "ownership": "condominium",
+      "buildingPermitDate": "1905-06-01"
+    },
+    "rent": {
+      "netColdMonthly": 1400,
+      "operatingCostsMonthly": 210
+    }
+  },
+  "expected": {
+    "acquisitionTotalCents": 3515100,
+    "financing": {
+      "monthlyPaymentCents": 90929,
+      "year1InterestCents": 713815,
+      "year1PrincipalCents": 377333,
+      "totalInterestCents": 12734500,
+      "ltvPct": 62.5
+    },
+    "operating": {
+      "rent": 140000,
+      "vacancy": 6440,
+      "reserveFund": 7840,
+      "maintenance": 5919
+    },
+    "metrics": {
+      "monthlyNoiCents": 119801,
+      "monthlyCashFlowCents": 28872,
+      "grossYieldPct": 5.25,
+      "netYieldPct": 4.05,
+      "cashOnCashPct": 2.23,
+      "dscr": 1.32,
+      "totalInvestmentCents": 35515100,
+      "equityCents": 15515100,
+      "breakEvenRentCents": 109925,
+      "breakEvenRentPerM2": 15.7
+    },
+    "rentRegulation": {
+      "status": "full",
+      "basis": "permitDate"
+    },
+    "flags": [
+      "assumption.contractFee",
+      "assumption.mortgageRegistration",
+      "assumption.operatingDefaults",
+      "assumption.reserveMinimum",
+      "rent.fullMrg"
+    ]
+  },
+  "derivation": [
+    "Loan: annuity €200,000.00 at 3.6% over 30 years = €909.29 a month",
+    "Vacancy: 4% × €1,610.00 = €64.40",
+    "Reserve: statutory minimum 112 ct/m² × 70.0 m² = €78.40",
+    "Maintenance: 0.2% × €355,151.00 ÷ 12 = €59.19",
+    "NOI €1,198.01, cash flow €288.72 a month, break-even rent €1,099.25"
+  ],
+  "oracle": "Independent Python Fraction implementation (exact annuity, explicit rounding)."
+}

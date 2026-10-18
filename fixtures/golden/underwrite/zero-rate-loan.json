@@ -1,0 +1,69 @@
+{
+  "name": "zero-rate-loan",
+  "description": "Interest-free family loan over 10 years: payment is loan ÷ 120.",
+  "input": {
+    "valuationDate": "2026-10-18",
+    "purchasePrice": 180000,
+    "broker": "none",
+    "financing": {
+      "loanAmount": 100000,
+      "ratePct": 0,
+      "termYears": 10
+    },
+    "property": {
+      "livingAreaM2": 45,
+      "ownership": "condominium",
+      "buildingPermitDate": "1995-01-01"
+    },
+    "rent": {
+      "netColdMonthly": 690
+    }
+  },
+  "expected": {
+    "acquisitionTotalCents": 1311100,
+    "financing": {
+      "monthlyPaymentCents": 83333,
+      "year1InterestCents": 0,
+      "year1PrincipalCents": 999996,
+      "totalInterestCents": 0,
+      "ltvPct": 55.56
+    },
+    "operating": {
+      "rent": 69000,
+      "vacancy": 2760,
+      "reserveFund": 5040,
+      "maintenance": 3219
+    },
+    "metrics": {
+      "monthlyNoiCents": 57981,
+      "monthlyCashFlowCents": -25352,
+      "grossYieldPct": 4.6,
+      "netYieldPct": 3.6,
+      "cashOnCashPct": -3.27,
+      "dscr": 0.7,
+      "totalInvestmentCents": 19311100,
+      "equityCents": 9311100,
+      "breakEvenRentCents": 95409,
+      "breakEvenRentPerM2": 21.2
+    },
+    "rentRegulation": {
+      "status": "partial",
+      "basis": "permitDate"
+    },
+    "flags": [
+      "assumption.contractFee",
+      "assumption.mortgageRegistration",
+      "assumption.operatingDefaults",
+      "assumption.reserveMinimum",
+      "cashflow.negative"
+    ]
+  },
+  "derivation": [
+    "Loan: annuity €100,000.00 at 0% over 10 years = €833.33 a month",
+    "Vacancy: 4% × €690.00 = €27.60",
+    "Reserve: statutory minimum 112 ct/m² × 45.0 m² = €50.40",
+    "Maintenance: 0.2% × €193,111.00 ÷ 12 = €32.19",
+    "NOI €579.81, cash flow €-253.52 a month, break-even rent €954.09"
+  ],
+  "oracle": "Independent Python Fraction implementation (exact annuity, explicit rounding)."
+}

@@ -1,0 +1,72 @@
+{
+  "name": "house-excluded",
+  "description": "Single-family house: outside the MRG, no WEG reserve, maintenance given directly.",
+  "input": {
+    "valuationDate": "2026-10-18",
+    "purchasePrice": 450000,
+    "broker": {
+      "commissionPct": 3,
+      "sellerPaysCommission": true
+    },
+    "financing": {
+      "loanAmount": 300000,
+      "ratePct": 3.5,
+      "termYears": 30
+    },
+    "property": {
+      "livingAreaM2": 120,
+      "ownership": "house",
+      "buildingYear": 1985
+    },
+    "rent": {
+      "netColdMonthly": 1800
+    },
+    "ownerCosts": {
+      "maintenanceMonthly": 150
+    },
+    "assumptions": {
+      "vacancyPct": 2
+    }
+  },
+  "expected": {
+    "acquisitionTotalCents": 4971100,
+    "financing": {
+      "monthlyPaymentCents": 134713,
+      "year1InterestCents": 1040823,
+      "year1PrincipalCents": 575733,
+      "totalInterestCents": 18496951,
+      "ltvPct": 66.67
+    },
+    "operating": {
+      "rent": 180000,
+      "vacancy": 3600,
+      "maintenance": 15000
+    },
+    "metrics": {
+      "monthlyNoiCents": 161400,
+      "monthlyCashFlowCents": 26687,
+      "grossYieldPct": 4.8,
+      "netYieldPct": 3.88,
+      "cashOnCashPct": 1.6,
+      "dscr": 1.2,
+      "totalInvestmentCents": 49971100,
+      "equityCents": 19971100,
+      "breakEvenRentCents": 152769,
+      "breakEvenRentPerM2": 12.73
+    },
+    "rentRegulation": {
+      "status": "excluded",
+      "basis": "unitCount"
+    },
+    "flags": [
+      "assumption.contractFee",
+      "assumption.mortgageRegistration"
+    ]
+  },
+  "derivation": [
+    "Loan: annuity €300,000.00 at 3.5% over 30 years = €1,347.13 a month",
+    "Vacancy: 2% × €1,800.00 = €36.00",
+    "NOI €1,614.00, cash flow €266.87 a month, break-even rent €1,527.69"
+  ],
+  "oracle": "Independent Python Fraction implementation (exact annuity, explicit rounding)."
+}

@@ -1,0 +1,78 @@
+{
+  "name": "favoriten-unknown-regulation",
+  "description": "The 'flagged' mock listing: no build year, reserve folded into operating costs (so the statutory minimum is used), 6% vacancy, 3.5% management.",
+  "input": {
+    "valuationDate": "2026-10-18",
+    "purchasePrice": 198500,
+    "broker": {
+      "commissionPct": 3.6
+    },
+    "financing": {
+      "loanAmount": 138950,
+      "ratePct": 4.3,
+      "termYears": 25
+    },
+    "property": {
+      "livingAreaM2": 41,
+      "ownership": "condominium"
+    },
+    "rent": {
+      "netColdMonthly": 560,
+      "operatingCostsMonthly": 168
+    },
+    "assumptions": {
+      "vacancyPct": 6,
+      "managementPct": 3.5
+    }
+  },
+  "expected": {
+    "acquisitionTotalCents": 2347870,
+    "financing": {
+      "monthlyPaymentCents": 75664,
+      "year1InterestCents": 591292,
+      "year1PrincipalCents": 316676,
+      "totalInterestCents": 8804235,
+      "ltvPct": 70.0
+    },
+    "operating": {
+      "rent": 56000,
+      "vacancy": 4368,
+      "management": 1960,
+      "reserveFund": 4592,
+      "maintenance": 3700
+    },
+    "metrics": {
+      "monthlyNoiCents": 41380,
+      "monthlyCashFlowCents": -34284,
+      "grossYieldPct": 3.39,
+      "netYieldPct": 2.24,
+      "cashOnCashPct": -4.96,
+      "dscr": 0.55,
+      "totalInvestmentCents": 22197870,
+      "equityCents": 8302870,
+      "breakEvenRentCents": 93883,
+      "breakEvenRentPerM2": 22.9
+    },
+    "rentRegulation": {
+      "status": "unknown",
+      "basis": "none"
+    },
+    "flags": [
+      "assumption.contractFee",
+      "assumption.mortgageRegistration",
+      "assumption.operatingDefaults",
+      "assumption.reserveMinimum",
+      "broker.lawfulOnlyIfSellerPaysNothing",
+      "cashflow.negative",
+      "rent.regulationUnknown"
+    ]
+  },
+  "derivation": [
+    "Loan: annuity €138,950.00 at 4.3% over 25 years = €756.64 a month",
+    "Vacancy: 6% × €728.00 = €43.68",
+    "Reserve: statutory minimum 112 ct/m² × 41.0 m² = €45.92",
+    "Maintenance: 0.2% × €221,978.70 ÷ 12 = €37.00",
+    "NOI €413.80, cash flow €-342.84 a month, break-even rent €938.83"
+  ],
+  "oracle": "Independent Python Fraction implementation (exact annuity, explicit rounding)."
+}

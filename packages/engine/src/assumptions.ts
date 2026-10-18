@@ -73,6 +73,61 @@ export const ACQUISITION_ASSUMPTIONS: {
   },
 };
 
+export interface OperatingAssumptions {
+  /** Rent loss from vacancy, % of gross rent (net cold rent + operating costs). */
+  vacancyPct: number;
+  /** Owner's maintenance, % per year of the total investment (price + acquisition costs). */
+  maintenancePctPerYear: number;
+  /** Property management paid by the owner, % of net cold rent. */
+  managementPct: number;
+}
+
+export type OperatingAssumptionId = keyof OperatingAssumptions;
+
+const ANLEGER_ARTICLE = {
+  label:
+    "GELD-Magazin 02/2021 'Anlegerwohnungen richtig kalkulieren' (tax adviser C. Klausner): vacancy 3–5% of gross annual rent, maintenance 0.2% of acquisition costs per year",
+  url: "https://www.infina.at/fileadmin/content/Presse/202102_GELD_Magazin_Anlegerwohnungen_Richtig_kalkulieren.pdf",
+};
+
+export const OPERATING_ASSUMPTIONS: {
+  [K in OperatingAssumptionId]: AssumptionDefinition<OperatingAssumptions[K]>;
+} = {
+  vacancyPct: {
+    default: 4,
+    min: 0,
+    max: 50,
+    description:
+      "Expected rent loss from vacancy and non-payment, % of gross rent. While a flat is empty the owner also pays its operating costs.",
+    source: ANLEGER_ARTICLE,
+  },
+  maintenancePctPerYear: {
+    default: 0.2,
+    min: 0,
+    max: 5,
+    description:
+      "Owner's own maintenance inside the flat (not covered by the building's reserve), % per year of price plus acquisition costs.",
+    source: ANLEGER_ARTICLE,
+  },
+  managementPct: {
+    default: 0,
+    min: 0,
+    max: 30,
+    description: "Letting or management fees paid by the owner, % of net cold rent. 0 means self-managed.",
+    source: { label: "Assumption: owner manages the letting" },
+  },
+};
+
+export function defaultOperatingAssumptions(): OperatingAssumptions {
+  return {
+    vacancyPct: OPERATING_ASSUMPTIONS.vacancyPct.default,
+    maintenancePctPerYear: OPERATING_ASSUMPTIONS.maintenancePctPerYear.default,
+    managementPct: OPERATING_ASSUMPTIONS.managementPct.default,
+  };
+}
+
+export type UnderwriteAssumptions = AcquisitionAssumptions & OperatingAssumptions;
+
 export function defaultAcquisitionAssumptions(): AcquisitionAssumptions {
   return {
     contractFeePct: ACQUISITION_ASSUMPTIONS.contractFeePct.default,

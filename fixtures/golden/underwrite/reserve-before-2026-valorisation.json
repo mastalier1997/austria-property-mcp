@@ -1,0 +1,73 @@
+{
+  "name": "reserve-before-2026-valorisation",
+  "description": "Valuation date 2025-12-31: statutory minimum reserve still €1.06 per m².",
+  "input": {
+    "valuationDate": "2025-12-31",
+    "purchasePrice": 240000,
+    "broker": {
+      "commissionPct": 3,
+      "sellerPaysCommission": true
+    },
+    "financing": {
+      "loanAmount": 150000,
+      "ratePct": 3.7,
+      "termYears": 25
+    },
+    "property": {
+      "livingAreaM2": 60,
+      "ownership": "condominium",
+      "buildingPermitDate": "1988-09-01"
+    },
+    "rent": {
+      "netColdMonthly": 1050,
+      "operatingCostsMonthly": 180
+    }
+  },
+  "expected": {
+    "acquisitionTotalCents": 2637000,
+    "financing": {
+      "monthlyPaymentCents": 76712,
+      "year1InterestCents": 548736,
+      "year1PrincipalCents": 371808,
+      "totalInterestCents": 8013628,
+      "ltvPct": 62.5
+    },
+    "operating": {
+      "rent": 105000,
+      "vacancy": 4920,
+      "reserveFund": 6360,
+      "maintenance": 4440
+    },
+    "metrics": {
+      "monthlyNoiCents": 89280,
+      "monthlyCashFlowCents": 12568,
+      "grossYieldPct": 5.25,
+      "netYieldPct": 4.02,
+      "cashOnCashPct": 1.3,
+      "dscr": 1.16,
+      "totalInvestmentCents": 26637000,
+      "equityCents": 11637000,
+      "breakEvenRentCents": 91909,
+      "breakEvenRentPerM2": 15.32
+    },
+    "rentRegulation": {
+      "status": "partial",
+      "basis": "permitDate"
+    },
+    "flags": [
+      "assumption.contractFee",
+      "assumption.mortgageRegistration",
+      "assumption.operatingDefaults",
+      "assumption.reserveMinimum",
+      "financing.thinDscr"
+    ]
+  },
+  "derivation": [
+    "Loan: annuity €150,000.00 at 3.7% over 25 years = €767.12 a month",
+    "Vacancy: 4% × €1,230.00 = €49.20",
+    "Reserve: statutory minimum 106 ct/m² × 60.0 m² = €63.60",
+    "Maintenance: 0.2% × €266,370.00 ÷ 12 = €44.40",
+    "NOI €892.80, cash flow €125.68 a month, break-even rent €919.09"
+  ],
+  "oracle": "Independent Python Fraction implementation (exact annuity, explicit rounding)."
+}

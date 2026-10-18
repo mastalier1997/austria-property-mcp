@@ -42,7 +42,8 @@ pnpm test:watch
 
 The SvelteKit app at github.com/mastalier1997/property-cashflow has a mock calculation in `src/lib/underwriting.ts`. Use it as a reference for domain logic and risk flags, not as code to copy: it uses flat rates and floats and has no tests.
 
-Known gaps to fix when porting:
-- The broker fee is not checked against the statutory maximum.
-- The AfA land share is a flat 80%.
-- The MRG check uses Baujahr. Whether the MRG applies depends on the date of the Baubewilligung and on whether the flat is Wohnungseigentum; verify this in RIS.
+Gaps in that mock, and where they stand here:
+- Broker fee vs the statutory maximum: done (M1, `brokerCap`).
+- MRG check: done (M2). It uses the Baubewilligung date and ownership type, not the build year, which is only an estimate.
+- AfA land share is a flat 80% there: still to do in the tax module; the land share depends on the municipality (Grundanteilverordnung).
+- Listing-quality flags there (Erdgeschoss, heating, Energieausweis, lift) belong with listing extraction, not the engine.

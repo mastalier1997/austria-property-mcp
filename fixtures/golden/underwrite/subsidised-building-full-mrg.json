@@ -1,0 +1,75 @@
+{
+  "name": "subsidised-building-full-mrg",
+  "description": "Whole rental building built with public funds (permit 1970): the new-building exemption does not apply.",
+  "input": {
+    "valuationDate": "2026-10-18",
+    "purchasePrice": 1200000,
+    "broker": {
+      "commissionPct": 3,
+      "sellerPaysCommission": true
+    },
+    "financing": {
+      "loanAmount": 800000,
+      "ratePct": 3.8,
+      "termYears": 25
+    },
+    "property": {
+      "livingAreaM2": 600,
+      "ownership": "wholeBuilding",
+      "buildingPermitDate": "1970-04-15",
+      "publicFunding": true,
+      "unitsInBuilding": 9
+    },
+    "rent": {
+      "netColdMonthly": 6600,
+      "operatingCostsMonthly": 1500
+    },
+    "ownerCosts": {
+      "maintenanceMonthly": 900
+    }
+  },
+  "expected": {
+    "acquisitionTotalCents": 13251100,
+    "financing": {
+      "monthlyPaymentCents": 413485,
+      "year1InterestCents": 3006171,
+      "year1PrincipalCents": 1955649,
+      "totalInterestCents": 44045621,
+      "ltvPct": 66.67
+    },
+    "operating": {
+      "rent": 660000,
+      "vacancy": 32400,
+      "maintenance": 90000
+    },
+    "metrics": {
+      "monthlyNoiCents": 537600,
+      "monthlyCashFlowCents": 124115,
+      "grossYieldPct": 6.6,
+      "netYieldPct": 4.84,
+      "cashOnCashPct": 2.8,
+      "dscr": 1.3,
+      "totalInvestmentCents": 133251100,
+      "equityCents": 53251100,
+      "breakEvenRentCents": 530714,
+      "breakEvenRentPerM2": 8.85
+    },
+    "rentRegulation": {
+      "status": "full",
+      "basis": "permitDate"
+    },
+    "flags": [
+      "assumption.contractFee",
+      "assumption.mortgageRegistration",
+      "assumption.operatingDefaults",
+      "rent.fullMrg",
+      "rent.publicFunding"
+    ]
+  },
+  "derivation": [
+    "Loan: annuity €800,000.00 at 3.8% over 25 years = €4,134.85 a month",
+    "Vacancy: 4% × €8,100.00 = €324.00",
+    "NOI €5,376.00, cash flow €1,241.15 a month, break-even rent €5,307.14"
+  ],
+  "oracle": "Independent Python Fraction implementation (exact annuity, explicit rounding)."
+}

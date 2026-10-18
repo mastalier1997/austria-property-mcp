@@ -1,6 +1,6 @@
 {
   "name": "@austria-property/engine",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Deterministic, source-cited underwriting engine for Austrian residential property.",
   "license": "AGPL-3.0-only",
