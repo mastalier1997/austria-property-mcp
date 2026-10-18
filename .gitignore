@@ -12,3 +12,9 @@ coverage/
 
 # Real listing text never goes in this repo (see CLAUDE.md)
 fixtures/private/
+
+# Copied in at pack time
+packages/mcp-server/LICENSE
+
+# Wrangler local state and dry-run bundles
+.wrangler/

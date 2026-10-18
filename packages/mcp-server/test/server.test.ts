@@ -34,6 +34,11 @@ describe("MCP server", () => {
   it("matches the package version and identifies itself", () => {
     const pkg = JSON.parse(readFileSync(join(import.meta.dirname, "../package.json"), "utf8"));
     expect(SERVER_VERSION).toBe(pkg.version);
+    const registry = JSON.parse(readFileSync(join(import.meta.dirname, "../server.json"), "utf8"));
+    expect(registry.version).toBe(pkg.version);
+    expect(registry.packages[0]).toMatchObject({ identifier: pkg.name, version: pkg.version });
+    expect(registry.name).toBe(pkg.mcpName);
+    expect(registry.description.length).toBeLessThanOrEqual(100);
     expect(client.getServerVersion()).toEqual({ name: "austria-property", version: SERVER_VERSION });
     expect(client.getInstructions()).toMatch(/not investment, tax or legal advice/);
   });

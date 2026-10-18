@@ -1,30 +1,62 @@
 {
-  "name": "@austria-property/mcp-server",
+  "name": "austria-property-mcp",
   "version": "0.3.0",
-  "private": true,
-  "description": "MCP server exposing the Austrian property underwriting engine to AI agents.",
+  "description": "MCP server for Austrian residential property: purchase costs (Grunderwerbsteuer, Grundbuch, broker cap), buy-to-let underwriting and MRG rent-cap checks, every number cited to its legal source.",
   "license": "AGPL-3.0-only",
+  "author": "Jan Henrik Mastalier",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mastalier1997/austria-property.git",
+    "directory": "packages/mcp-server"
+  },
+  "homepage": "https://github.com/mastalier1997/austria-property#readme",
+  "bugs": {
+    "url": "https://github.com/mastalier1997/austria-property/issues"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "mcp-server",
+    "austria",
+    "real-estate",
+    "immobilien",
+    "kaufnebenkosten",
+    "grunderwerbsteuer",
+    "mietrechtsgesetz",
+    "rendite",
+    "underwriting"
+  ],
+  "mcpName": "io.github.mastalier1997/austria-property",
   "type": "module",
   "bin": {
     "austria-property-mcp": "./dist/cli.js"
   },
   "exports": {
     ".": {
-      "types": "./dist/server.d.ts",
+      "types": "./dist/types/server.d.ts",
       "default": "./dist/server.js"
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md",
+    "LICENSE"
   ],
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json && node scripts/bundle.mjs",
     "typecheck": "tsc -p tsconfig.json",
-    "start": "node dist/cli.js"
+    "start": "node dist/cli.js",
+    "prepack": "node scripts/prepack.mjs"
   },
   "dependencies": {
-    "@austria-property/engine": "workspace:*",
     "@modelcontextprotocol/sdk": "1.32.1",
     "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@austria-property/engine": "workspace:*",
+    "esbuild": "0.28.2"
   }
 }

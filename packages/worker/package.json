@@ -1,0 +1,21 @@
+{
+  "name": "@austria-property/worker",
+  "version": "0.3.0",
+  "private": true,
+  "description": "Hosted MCP endpoint on Cloudflare Workers (stateless streamable HTTP).",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "bundle": "wrangler deploy --dry-run --outdir .wrangler/bundle",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.1",
+    "austria-property-mcp": "workspace:*"
+  },
+  "devDependencies": {
+    "wrangler": "4.151.1"
+  }
+}

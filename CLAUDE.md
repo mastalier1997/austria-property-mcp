@@ -15,6 +15,8 @@ pnpm test:watch
 
 - `packages/engine`: pure TypeScript with zero runtime dependencies. Tests live in `packages/engine/test`.
 - `packages/mcp-server`: thin MCP wrapper over stdio (`src/server.ts` registers the tools, `src/cli.ts` is the entry point). No calculation logic here: tools validate shape with zod, call the engine and format a summary. Range checks stay in the engine so agents get every problem at once. Never write to stdout outside the protocol.
+- `packages/worker`: the hosted endpoint on Cloudflare Workers. Stateless: each POST to `/mcp` gets a fresh server; GET is 405. Must stay within the free plan's 10 ms CPU per request.
+- Publishing: `docs/releasing.md`. The npm package bundles the engine with esbuild (`packages/mcp-server/scripts/bundle.mjs`); keep versions in `package.json`, `SERVER_VERSION` and `server.json` in sync (tested).
 - `fixtures/golden`: golden cases with synthetic inputs. Expected values come from `fixtures/golden/oracle.py`, an independent Python implementation. Never generate them from the engine itself.
 - `docs/rules.md`: rule catalogue with sources. A test fails if a rule id or assumption is missing from it.
 

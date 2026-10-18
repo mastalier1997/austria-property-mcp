@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "noEmit": true,
+    // Node's types provide the same fetch-API globals (Request, Response, Headers) as Workers.
+    "types": ["node"]
+  },
+  "include": ["src", "test"]
+}

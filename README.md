@@ -2,7 +2,7 @@
 
 A deterministic underwriting engine for Austrian residential buy-to-let property. Every number it returns cites its legal source. AI agents use it through MCP, and apps through an HTTP API.
 
-> **Status: M3.** The engine (acquisition costs, underwriting, rent-regulation check) is tested against verified rules (see [docs/rules.md](docs/rules.md)), and an MCP server exposes it to Claude and other agents over stdio. Hosting, npm and the MCP registry come next. See [docs/plan.md](docs/plan.md) for the milestones.
+> **Status: M4 in progress.** The engine (acquisition costs, underwriting, rent-regulation check) is tested against verified rules (see [docs/rules.md](docs/rules.md)). The MCP server runs locally via npm (`austria-property-mcp`) and as a hosted endpoint on Cloudflare Workers. See [docs/plan.md](docs/plan.md) for the milestones and [docs/releasing.md](docs/releasing.md) for publishing.
 
 ## Use it from Claude (MCP)
 
@@ -16,37 +16,33 @@ The server offers three read-only tools:
 
 Each result has a short readable summary followed by the full result as JSON.
 
-Until it is published to npm, build it locally:
+**Claude Code** (add `--scope user` to use it in every project; on native Windows put `cmd /c` before `npx`):
 
 ```bash
-git clone https://github.com/mastalier1997/austria-property.git
-cd austria-property
-pnpm install && pnpm build
+claude mcp add austria-property -- npx -y austria-property-mcp
 ```
 
-**Claude Code** (use the absolute path on your machine; add `--scope user` to use it in every project):
+To run from a local checkout instead: `pnpm install && pnpm build`, then use `node <absolute path>/packages/mcp-server/dist/cli.js` as the command.
 
-```bash
-claude mcp add austria-property -- node /absolute/path/to/austria-property/packages/mcp-server/dist/cli.js
-```
-
-**Claude Desktop:** add this to `claude_desktop_config.json` (Windows: `%APPDATA%\Claude\`, macOS: `~/Library/Application Support/Claude/`) and restart the app. On Windows, write the path with forward slashes (`D:/Coding/austria-property/...`) or doubled backslashes:
+**Claude Desktop:** add this to `claude_desktop_config.json` (Windows: `%APPDATA%\Claude\`, macOS: `~/Library/Application Support/Claude/`) and restart the app:
 
 ```json
 {
   "mcpServers": {
     "austria-property": {
-      "command": "node",
-      "args": ["/absolute/path/to/austria-property/packages/mcp-server/dist/cli.js"]
+      "command": "npx",
+      "args": ["-y", "austria-property-mcp"]
     }
   }
 }
 ```
 
+**Hosted endpoint** (no install; stateless streamable HTTP): see [docs/releasing.md](docs/releasing.md) for the URL once deployed, then `claude mcp add --transport http austria-property <url>/mcp`.
+
 **MCP Inspector**, to try the tools by hand:
 
 ```bash
-npx @modelcontextprotocol/inspector node packages/mcp-server/dist/cli.js
+npx @modelcontextprotocol/inspector npx -y austria-property-mcp
 ```
 
 Then ask, for example: *"What does a €249,000 flat in Graz cost to buy with 3% broker commission?"* or *"Underwrite this listing: €269k, 54 m² Eigentumswohnung built 1978, rent €795, 65% loan at 3.9% over 25 years."*

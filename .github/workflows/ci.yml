@@ -23,3 +23,8 @@ jobs:
       - run: pnpm build
       - run: pnpm typecheck
       - run: pnpm test
+      - name: Check the Cloudflare Workers bundle
+        if: matrix.os == 'ubuntu-latest'
+        run: pnpm --filter @austria-property/worker run bundle
+        env:
+          WRANGLER_SEND_METRICS: "false"

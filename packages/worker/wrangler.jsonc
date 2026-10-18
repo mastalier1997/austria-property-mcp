@@ -1,0 +1,11 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "austria-property-mcp",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  // Free plan: 100,000 requests a day and 10 ms CPU per request. The engine
+  // needs well under 1 ms per calculation.
+  "workers_dev": true
+}

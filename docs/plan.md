@@ -184,11 +184,6 @@ Write tool descriptions for agents. Each should say when to call the tool, the u
 - tax module
 - Germany
 
-## Open decisions
-
-- **Name** for the repo, npm scope and MCP server.
-- **Hosting** for M4.
-
 ## Status
 
 - **M0 done** (2026-10-18): workspace, CI.
@@ -198,8 +193,12 @@ Write tool descriptions for agents. Each should say when to call the tool, the u
 
 - **M3 done** (2026-10-18): `packages/mcp-server` with `estimate_acquisition_costs`, `underwrite_property` and `get_rules` over stdio (MCP SDK 1.32). Each result is a readable summary plus the full JSON; input errors and uncovered dates come back as tool errors the agent can fix. `valuationDate` defaults to today in Vienna. Tested in-memory, over stdio against the built CLI, and with MCP Inspector 2.11. Setup is in the README; verified in Claude Code on Windows on 2026-10-18.
 
+- **M4 prepared** (2026-10-18): repo public (history rewritten to a noreply author), npm package `austria-property-mcp` (engine bundled, verified from a packed tarball via npx), Cloudflare Worker with stateless streamable HTTP (tested in Node and locally in workerd; bundle 262 kB gzipped), `server.json` for the MCP registry. Still to do by hand: npm publish, Worker deploy, registry publish (docs/releasing.md). Free tier without API keys for now; keys come with a paid tier.
+
 ## Decided
 
+- **Hosting: Cloudflare Workers free plan** (October 2026). The engine needs no Node APIs and well under 1 ms CPU per calculation.
+- **npm name: `austria-property-mcp`**; registry name `io.github.mastalier1997/austria-property`.
 - **License: AGPL-3.0-only** (October 2026). Anyone who modifies the engine and offers it to others, including as a hosted service, must publish their changes under AGPL. Commercial licences without AGPL terms stay possible while all the code has a single author. Decide on a CLA before accepting outside contributions.
 
 ## Ground rules
