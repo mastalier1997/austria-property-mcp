@@ -40,7 +40,7 @@ const detail = z
   .enum(DETAILS)
   .optional()
   .describe(
-    'How much of the result to return as JSON. "summary" (default) keeps the key figures, flags and deduplicated citations, about a tenth of the size. "full" adds every line item with its calculation, the tax years, the rules used and the assumptions. The readable text is the same in both.',
+    'How much of the result to return as JSON. "summary" (default) keeps the key figures, flags, assumptions, limitations and deduplicated citations (about 40% of the size for underwrite_property, 60% for estimate_acquisition_costs). "full" adds every line item with its calculation and citations, the tax years and the rules used. The readable text is the same in both.',
   );
 
 const loanAmount = z.number().describe("Loan amount in EUR.");
