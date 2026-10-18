@@ -37,15 +37,9 @@ pnpm test:watch
 
 ## Data hygiene
 
-- No real listing text, agent names, phone numbers or personal data in this repo. `fixtures/private/` is gitignored.
+- No real listing text, agent names, phone numbers or personal data in this repo. `fixtures/private/` and `private/` (personal notes, task list) are gitignored.
 - Nothing from the author's employer or client work.
 
 ## Prior art
 
-The SvelteKit app at github.com/mastalier1997/property-cashflow has a mock calculation in `src/lib/underwriting.ts`. Use it as a reference for domain logic and risk flags, not as code to copy: it uses flat rates and floats and has no tests.
-
-Gaps in that mock, and where they stand here:
-- Broker fee vs the statutory maximum: done (M1, `brokerCap`).
-- MRG check: done (M2). It uses the Baubewilligung date and ownership type, not the build year, which is only an estimate.
-- AfA land share is a flat 80% there: still to do in the tax module; the land share depends on the municipality (Grundanteilverordnung).
-- Listing-quality flags there (Erdgeschoss, heating, Energieausweis, lift) belong with listing extraction, not the engine.
+The SvelteKit app at github.com/mastalier1997/property-cashflow has a mock calculation in `src/lib/underwriting.ts`. Use it as a reference for domain logic and risk flags, not as code to copy: it uses flat rates and floats and has no tests. Its listing-quality flags (Erdgeschoss, heating, Energieausweis, lift) belong with listing extraction, not the engine.

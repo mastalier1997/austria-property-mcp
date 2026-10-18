@@ -18,3 +18,7 @@ packages/mcp-server/LICENSE
 
 # Wrangler local state and dry-run bundles
 .wrangler/
+
+# graphify output and personal notes
+graphify-out/
+private/
