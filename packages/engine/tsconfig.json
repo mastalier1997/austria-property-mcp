@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "noEmit": true,
+    // No Node or DOM types: the engine must stay pure (no I/O, no network, no console).
+    "types": []
+  },
+  "include": ["src", "test"]
+}
