@@ -11,6 +11,10 @@ export interface AnnuitySchedule {
   year1PrincipalCents: Cents;
   balanceAfterYear1Cents: Cents;
   totalInterestCents: Cents;
+  /** Interest paid in each loan year (index 0 = year 1), for the tax projection. */
+  interestByYearCents: Cents[];
+  /** Total payments (interest + principal) in each loan year (index 0 = year 1). */
+  paymentByYearCents: Cents[];
 }
 
 /** Months per year times one million: monthly rate = annual ppm / this. */
@@ -47,10 +51,15 @@ export function annuitySchedule(loanCents: Cents, ratePpm: Ppm, termMonths: numb
   let year1Interest = 0n;
   let year1Principal = 0n;
   let balanceAfterYear1 = balance;
+  const interestByYear: bigint[] = [];
+  const paymentByYear: bigint[] = [];
   for (let month = 1; month <= termMonths; month++) {
     const interest = divRound(balance * BigInt(ratePpm), MONTHLY_DENOMINATOR, "halfUp");
+    const yearIndex = Math.floor((month - 1) / 12);
+    interestByYear[yearIndex] = (interestByYear[yearIndex] ?? 0n) + interest;
     let principal = BigInt(payment) - interest;
     if (month === termMonths || principal > balance) principal = balance;
+    paymentByYear[yearIndex] = (paymentByYear[yearIndex] ?? 0n) + interest + principal;
     balance -= principal;
     totalInterest += interest;
     if (month <= 12) {
@@ -68,5 +77,7 @@ export function annuitySchedule(loanCents: Cents, ratePpm: Ppm, termMonths: numb
     year1PrincipalCents: Number(year1Principal),
     balanceAfterYear1Cents: Number(balanceAfterYear1),
     totalInterestCents: Number(totalInterest),
+    interestByYearCents: interestByYear.map(Number),
+    paymentByYearCents: paymentByYear.map(Number),
   };
 }

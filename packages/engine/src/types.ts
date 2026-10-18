@@ -81,7 +81,11 @@ export type FlagId =
   | "rent.fullMrg"
   | "rent.regulationUnknown"
   | "rent.regulationEstimated"
-  | "rent.publicFunding";
+  | "rent.publicFunding"
+  | "assumption.taxRate"
+  | "assumption.landShare"
+  | "tax.liebhabereiRisk"
+  | "tax.newBuildAfaNotModelled";
 
 export type UnderwriteAssumptionId = AssumptionId | OperatingAssumptionId;
 
@@ -160,6 +164,20 @@ export interface OwnerCostsInput {
   maintenanceMonthly?: number;
 }
 
+export interface TaxInput {
+  /**
+   * The owner's other taxable income per year in EUR (e.g. salary after social security).
+   * When given, tax is computed with the § 33 tariff instead of the marginalTaxRatePct assumption.
+   */
+  otherTaxableIncome?: number;
+  /** Land share of the purchase in %, if known (e.g. from an expert opinion). Overrides the GrundanteilV presumption. */
+  landSharePct?: number;
+  /** Inhabitants of the municipality (latest census), for the GrundanteilV presumption. */
+  municipalityInhabitants?: number;
+  /** Average price of building land (baureifes Land) in the municipality, EUR per m². */
+  averageLandPricePerM2?: number;
+}
+
 export interface UnderwriteInput {
   valuationDate: IsoDate;
   purchasePrice: number;
@@ -168,6 +186,7 @@ export interface UnderwriteInput {
   property?: PropertyInput;
   rent: RentInput;
   ownerCosts?: OwnerCostsInput;
+  tax?: TaxInput;
   assumptions?: Partial<UnderwriteAssumptions>;
 }
 
@@ -228,6 +247,104 @@ export interface UnderwriteMetrics {
   breakEvenRentPerM2: number | null;
 }
 
+// ---------------------------------------------------------------------------
+// Rental income tax
+// ---------------------------------------------------------------------------
+
+export interface LandShareResult {
+  /** Share of the acquisition cost attributed to land, which cannot be depreciated, %. */
+  pct: number;
+  /** input = given by the caller; grundanteilV = presumed under the Grundanteilverordnung 2016. */
+  basis: "input" | "grundanteilV";
+  /** False if the presumption had to assume facts the caller did not give (municipality or unit count). */
+  factsComplete: boolean;
+  explanation: string;
+  ruleIds: RuleId[];
+  citations: Citation[];
+}
+
+export interface AfaResult {
+  /** Price plus acquisition costs, without the mortgage registration fee (a cost of borrowing). */
+  costBasisCents: Cents;
+  landShareCents: Cents;
+  /** Depreciable building share of the cost basis. */
+  buildingCents: Cents;
+  year1Pct: number;
+  year2Pct: number;
+  fromYear3Pct: number;
+  calculation: string;
+  ruleIds: RuleId[];
+  citations: Citation[];
+}
+
+export interface LoanCostsResult {
+  /** Mortgage registration fee, deducted as a cost of borrowing. */
+  totalCents: Cents;
+  /** Number of years it is spread over (1 if it is deducted at once). */
+  spreadYears: number;
+  calculation: string;
+  citations: Citation[];
+}
+
+/** One tax year. Tax years are treated as loan years; year 1 is a full year of rent. */
+export interface TaxYear {
+  year: number;
+  /** Net cold rent less vacancy and rent loss. */
+  netRentalIncomeCents: Cents;
+  interestCents: Cents;
+  afaCents: Cents;
+  /** Management and owner's maintenance. */
+  operatingCostsCents: Cents;
+  /** Share of the mortgage registration fee. */
+  loanCostsCents: Cents;
+  /** Repair-reserve contributions paid, not deductible until the reserve is spent. Not part of resultCents. */
+  reserveNotDeductedCents: Cents;
+  /** Rental result (Einkünfte aus Vermietung und Verpachtung): income minus deductions. */
+  resultCents: Cents;
+  /** Income tax caused by the rental result. Negative is a saving on other income. */
+  taxCents: Cents;
+  cashFlowBeforeTaxCents: Cents;
+  cashFlowAfterTaxCents: Cents;
+}
+
+export type LiebhabereiStatus = "totalSurplus" | "noTotalSurplus" | "notChecked";
+
+export interface LiebhabereiResult {
+  status: LiebhabereiStatus;
+  /** Years within which a total surplus must be expected. Null if not checked. */
+  horizonYears: number | null;
+  /** Sum of the rental results over the horizon, with the repair reserve deducted. */
+  cumulativeResultCents: Cents | null;
+  /** First year from which the cumulative result stays positive until the end of the horizon. */
+  totalSurplusFromYear: number | null;
+  /** Rental result per year over the horizon, with the repair reserve deducted (index 0 = year 1). */
+  resultByYearCents: Cents[];
+  explanation: string;
+  ruleIds: RuleId[];
+  citations: Citation[];
+}
+
+export interface TaxResult {
+  /** marginalRate = result × marginalTaxRatePct; tariff = § 33 tariff on other income plus the rental result. */
+  method: "marginalRate" | "tariff";
+  /** Rate applied (marginalRate) or the bracket rate at the other income (tariff), %. */
+  marginalRatePct: number;
+  otherTaxableIncomeCents: Cents | null;
+  /** Calendar year whose tariff is used for every projected year. Null for the marginalRate method. */
+  tariffYear: number | null;
+  landShare: LandShareResult;
+  afa: AfaResult;
+  loanCosts: LoanCostsResult | null;
+  /** Years 1 to 5. */
+  years: TaxYear[];
+  /** Year-1 cash flow after tax, per month. */
+  monthlyCashFlowAfterTaxYear1Cents: Cents;
+  monthlyCashFlowAfterTaxYear1: number;
+  liebhaberei: LiebhabereiResult;
+  calculation: string;
+  citations: Citation[];
+}
+
 export interface UnderwriteResult {
   engineVersion: string;
   valuationDate: IsoDate;
@@ -238,6 +355,8 @@ export interface UnderwriteResult {
   operating: OperatingLine[];
   metrics: UnderwriteMetrics;
   rentRegulation: RentRegulation;
+  /** Income tax on the rental result, AfA, after-tax cash flow and the Liebhaberei check. */
+  tax: TaxResult;
   /** All flags, including those from the acquisition-cost calculation. */
   flags: Flag[];
   assumptionsUsed: UnderwriteAssumptions;

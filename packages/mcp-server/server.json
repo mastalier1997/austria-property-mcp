@@ -2,18 +2,18 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.mastalier1997/austria-property",
   "title": "Austria Property",
-  "description": "Austrian property costs, buy-to-let underwriting and rent-cap checks, cited to the statute",
+  "description": "Austrian property costs, buy-to-let underwriting, income tax and rent caps, cited to the statute",
   "repository": {
     "url": "https://github.com/mastalier1997/austria-property-mcp",
     "source": "github",
     "subfolder": "packages/mcp-server"
   },
-  "version": "0.3.0",
+  "version": "0.4.0",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "austria-property-mcp",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "transport": {
         "type": "stdio"
       }

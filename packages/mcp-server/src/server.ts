@@ -18,7 +18,7 @@ import { acquisitionInput, rulesInput, underwriteInput } from "./schemas.js";
 import { formatRuleValue, summariseAcquisition, summariseUnderwrite } from "./summary.js";
 
 /** Keep in sync with package.json (checked by a test). */
-export const SERVER_VERSION = "0.3.0";
+export const SERVER_VERSION = "0.4.0";
 export const SERVER_NAME = "austria-property";
 
 export interface ServerOptions {
@@ -38,7 +38,7 @@ export function viennaToday(now: Date = new Date()): string {
 
 const INSTRUCTIONS = `Austrian residential property calculations with cited legal sources (RIS).
 - estimate_acquisition_costs: purchase costs on top of the price (Kaufnebenkosten).
-- underwrite_property: full buy-to-let analysis (costs, loan, cash flow, yields, break-even rent, MRG rent caps, risk flags).
+- underwrite_property: full buy-to-let analysis (costs, loan, cash flow before and after income tax, yields, break-even rent, MRG rent caps, AfA, Liebhaberei check, risk flags).
 - get_rules: the statutory values and default assumptions behind the numbers, for citing.
 All amounts are EUR; rents and owner costs are monthly and net of VAT. Results are deterministic calculations, not investment, tax or legal advice; say so when presenting them.`;
 
@@ -113,11 +113,12 @@ export function createServer(options: ServerOptions = {}): McpServer {
     {
       title: "Underwrite an Austrian buy-to-let purchase",
       description:
-        "Analyse an Austrian residential property as a rental investment: acquisition costs, annuity loan payment, monthly cash flow before tax, " +
-        "gross and net yield, cash-on-cash return, debt cover (DSCR), break-even rent, whether statutory rent caps (MRG) apply, and risk flags. " +
+        "Analyse an Austrian residential property as a rental investment: acquisition costs, annuity loan payment, monthly cash flow before and after income tax, " +
+        "gross and net yield, cash-on-cash return, debt cover (DSCR), break-even rent, whether statutory rent caps (MRG) apply, " +
+        "depreciation (AfA) with the legal land share, a 25-year Liebhaberei check, and risk flags. " +
         "Use when evaluating whether a specific flat or house is a good buy-to-let deal. " +
         "Inputs in EUR; rents and owner costs are monthly and net of VAT. Pass what you know: missing facts fall back to documented assumptions and are flagged. " +
-        "Not covered: income tax on rent, rent increases or interest-rate changes over time, the exact Richtwert cap.",
+        "Not covered: rent increases or interest-rate changes over time, tax credits, the exact Richtwert cap.",
       inputSchema: underwriteInput,
       annotations: ANNOTATIONS,
     },
@@ -137,7 +138,7 @@ export function createServer(options: ServerOptions = {}): McpServer {
     {
       title: "Statutory rules and assumptions",
       description:
-        "List the statutory values the engine uses on a date (tax and fee rates, broker caps, minimum repair reserve, MRG cut-off dates), " +
+        "List the statutory values the engine uses on a date (tax and fee rates, broker caps, minimum repair reserve, MRG cut-off dates, AfA rates, land shares, income tax brackets), " +
         "each with legal basis, source URL and the date it was last verified, plus the default assumptions and risk thresholds. " +
         "Use to cite sources or to explain how a number was calculated.",
       inputSchema: rulesInput,

@@ -2,7 +2,7 @@
 
 A deterministic underwriting engine for Austrian residential buy-to-let property. Every number it returns cites its legal source. AI agents use it through MCP, and apps through an HTTP API.
 
-> **Status: M4 — published.** The engine (acquisition costs, underwriting, rent-regulation check) is tested against verified rules (see [docs/rules.md](docs/rules.md)). The MCP server is on npm (`austria-property-mcp`) and runs as a free hosted endpoint on Cloudflare Workers. See [docs/plan.md](docs/plan.md) for the milestones and [docs/releasing.md](docs/releasing.md) for publishing.
+> **Status: M4 — published.** The engine (acquisition costs, underwriting, rent-regulation check, rental income tax) is tested against verified rules (see [docs/rules.md](docs/rules.md)). The MCP server is on npm (`austria-property-mcp`) and runs as a free hosted endpoint on Cloudflare Workers. See [docs/plan.md](docs/plan.md) for the milestones and [docs/releasing.md](docs/releasing.md) for publishing.
 
 ## Use it from Claude (MCP)
 
@@ -11,7 +11,7 @@ The server offers three read-only tools:
 | Tool | What it does |
 |---|---|
 | `estimate_acquisition_costs` | Purchase costs on top of the price (Grunderwerbsteuer, land-register fees, broker commission with legal-cap check, contract costs) |
-| `underwrite_property` | Full buy-to-let analysis: costs, loan payment, cash flow, yields, break-even rent, MRG rent caps, risk flags |
+| `underwrite_property` | Full buy-to-let analysis: costs, loan payment, cash flow before and after income tax, yields, break-even rent, MRG rent caps, AfA, Liebhaberei check, risk flags |
 | `get_rules` | The statutory values and default assumptions behind the numbers, with legal basis and source links |
 
 Each result has a short readable summary followed by the full result as JSON.
@@ -64,6 +64,7 @@ const result = underwrite({
   property: { livingAreaM2: 54, ownership: "condominium", buildingYear: 1978 },
   rent: { netColdMonthly: 795, operatingCostsMonthly: 132 },
   ownerCosts: { reserveFundMonthly: 41 },
+  tax: { otherTaxableIncome: 45_000, municipalityInhabitants: 2_000_000 }, // optional
 });
 
 result.acquisition.total;              // 29659 (acquisition costs, each line with its legal basis)
@@ -71,6 +72,8 @@ result.financing?.monthlyPayment;      // 913.3
 result.metrics.monthlyCashFlow;        // -246.16 (before tax)
 result.metrics.breakEvenRentCents;     // 105142 → €1,051.42 rent needed to break even
 result.rentRegulation.status;          // "partial": no statutory rent cap (estimated from the build year)
+result.tax.years[0].taxCents;          // tax saved in year 1 thanks to the accelerated AfA (negative = saving)
+result.tax.liebhaberei.status;         // "totalSurplus" within 25 years, so the losses count for tax
 result.flags;                          // negative cash flow, assumptions used, ...
 ```
 
@@ -81,6 +84,7 @@ result.flags;                          // negative cash flow, assumptions used, 
 - **Acquisition costs:** Grunderwerbsteuer, Grundbuch fees and broker commission, using the rules valid on a given date.
 - **Underwriting:** loan payment, cash flow, gross and net yield, cash-on-cash return, break-even rent and DSCR.
 - **Rent regulation:** whether the MRG caps the rent, from the building permit date, ownership type and building size.
+- **Income tax on rent:** AfA (including the accelerated rates) with the land share from the Grundanteilverordnung, the yearly rental result, income tax at a marginal rate or with the exact § 33 tariff, cash flow after tax, and a 25-year Liebhaberei check.
 - **Risk flags:** negative cash flow, high LTV, thin debt cover, missing inputs, and rent that may exceed a legal cap.
 - **Sources:** every statutory line item carries its legal basis and a source URL, so an agent can cite it.
 

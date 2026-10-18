@@ -34,6 +34,15 @@ export function divRound(numerator: bigint, denominator: bigint, rounding: Round
   }
 }
 
+/**
+ * numerator / denominator rounded to the nearest integer, ties away from zero.
+ * Unlike divRound, the numerator may be negative (e.g. a tax saving on a loss).
+ */
+export function divRoundSigned(numerator: bigint, denominator: bigint): bigint {
+  const magnitude = divRound(numerator < 0n ? -numerator : numerator, denominator, "halfUp");
+  return numerator < 0n ? -magnitude : magnitude;
+}
+
 /** cents × rate, rounded to whole cents. */
 export function applyRate(cents: Cents, rate: Ppm, rounding: Rounding): Cents {
   return Number(divRound(BigInt(cents) * BigInt(rate), PPM, rounding));

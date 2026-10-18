@@ -209,6 +209,8 @@ def annuity(loan, ppm, months):
 def schedule(loan, ppm, months):
     pay = annuity(loan, ppm, months)
     bal, total_int, y1i, y1p = loan, 0, 0, 0
+    int_by_year = [0] * ((months + 11) // 12)
+    pay_by_year = [0] * ((months + 11) // 12)
     for m in range(1, months + 1):
         interest = round_half_up(F(bal * ppm, 12_000_000))
         principal = pay - interest
@@ -216,10 +218,12 @@ def schedule(loan, ppm, months):
             principal = bal
         bal -= principal
         total_int += interest
+        int_by_year[(m - 1) // 12] += interest
+        pay_by_year[(m - 1) // 12] += interest + principal
         if m <= 12:
             y1i += interest
             y1p += principal
-    return pay, y1i, y1p, total_int
+    return pay, y1i, y1p, total_int, int_by_year, pay_by_year
 
 def rent_regulation(prop):
     own = prop.get("ownership")
@@ -259,6 +263,48 @@ def rent_regulation(prop):
     status = {True: "partial", False: "full", None: "unknown"}[partial]
     return status, basis
 
+# § 33 Abs. 1 EStG: upper ends of brackets 1-6 in EUR per calendar year, and the 7 rates.
+TARIFF = {
+    2025: [13308, 21617, 35836, 69166, 103072, 1000000],
+    2026: [13539, 21992, 36458, 70365, 104859, 1000000],
+    2027: [13846, 22491, 37285, 71960, 107236, 1000000],
+}
+TARIFF_RATES = [F(0), F(20, 100), F(30, 100), F(40, 100), F(48, 100), F(50, 100), F(55, 100)]
+
+def tariff_tax(year, income_cents):
+    """Income tax in cents on a yearly income in cents, before tax credits."""
+    if income_cents <= 0:
+        return 0
+    x = F(income_cents, 100)
+    edges = [0] + TARIFF[year]
+    tax = F(0)
+    for k, rate in enumerate(TARIFF_RATES):
+        lo = edges[k]
+        hi = edges[k + 1] if k + 1 < len(edges) else None
+        portion = (min(x, hi) if hi is not None else x) - lo
+        if portion > 0:
+            tax += portion * rate
+    return round_half_up(tax * 100)
+
+def bracket_rate(year, income_cents):
+    for k, hi in enumerate(TARIFF[year]):
+        if F(income_cents, 100) < hi:
+            return TARIFF_RATES[k]
+    return TARIFF_RATES[-1]
+
+def land_share(tax_in, prop):
+    """GrundanteilV 2016 § 2. Returns (share, facts_complete)."""
+    if "landSharePct" in tax_in:
+        return F(D(str(tax_in["landSharePct"]))) / 100, True
+    inh = tax_in.get("municipalityInhabitants")
+    price = tax_in.get("averageLandPricePerM2")
+    units = prop.get("unitsInBuilding")
+    if inh is not None and price is not None and inh < 100_000 and price < 400:
+        return F(20, 100), True
+    shown_large = (inh is not None and inh >= 100_000) or (price is not None and price >= 400)
+    share = F(30, 100) if (units is not None and units > 10) else F(40, 100)
+    return share, shown_large and units is not None
+
 def underwrite(case):
     i = case["input"]
     date = i["valuationDate"]
@@ -271,7 +317,7 @@ def underwrite(case):
     acq_input["assumptions"] = {k: v for k, v in given.items() if k in acq_keys}
     acq = run({"name": case["name"], "description": "", "input": acq_input})["expected"]
 
-    op = {"vacancyPct": 4, "maintenancePctPerYear": 0.2, "managementPct": 0}
+    op = {"vacancyPct": 4, "maintenancePctPerYear": 0.2, "managementPct": 0, "marginalTaxRatePct": 40}
     op.update({k: v for k, v in given.items() if k in op})
     price = to_cents(i["purchasePrice"])
     total_inv = price + acq["totalCents"]
@@ -288,9 +334,10 @@ def underwrite(case):
     loan = to_cents(fin["loanAmount"]) if fin else 0
     financing = None
     pay = 0
+    int_by_year, pay_by_year = [], []
     if loan > 0:
         rate_ppm = int(D(str(fin["ratePct"])) * 10_000)
-        pay, y1i, y1p, tot = schedule(loan, rate_ppm, fin["termYears"] * 12)
+        pay, y1i, y1p, tot, int_by_year, pay_by_year = schedule(loan, rate_ppm, fin["termYears"] * 12)
         financing = {
             "monthlyPaymentCents": pay,
             "year1InterestCents": y1i,
@@ -342,10 +389,10 @@ def underwrite(case):
     }
     deriv.append(f"NOI {eur(D(noi) / 100)}, cash flow {eur(D(cf) / 100)} a month, break-even rent {eur(D(be) / 100) if be is not None else '-'}")
 
-    status, basis = rent_regulation(prop)
-    if status == "full":
+    status_mrg, basis = rent_regulation(prop)
+    if status_mrg == "full":
         flags.append("rent.fullMrg")
-    elif status == "unknown":
+    elif status_mrg == "unknown":
         flags.append("rent.regulationUnknown")
     elif basis == "buildingYear":
         flags.append("rent.regulationEstimated")
@@ -365,6 +412,92 @@ def underwrite(case):
     if "vacancyPct" not in given or ("maintenancePctPerYear" not in given and "maintenanceMonthly" not in owner):
         flags.append("assumption.operatingDefaults")
 
+    # Rental income tax
+    tax_in = i.get("tax", {})
+    share, complete = land_share(tax_in, prop)
+    fee = acq["lineItems"].get("grundbuch.pfandrecht", 0)
+    cost_basis = total_inv - fee
+    land = round_half_up(cost_basis * share)
+    building = cost_basis - land
+    deriv.append(f"AfA basis: ({eur(D(total_inv) / 100)} − {eur(D(fee) / 100)} mortgage fee) × (1 − {float(share * 100)}% land) = {eur(D(building) / 100)}")
+    term = fin["termYears"] if loan > 0 else 0
+    spread = (1 if term <= 2 else term) if fee > 0 else 0
+
+    def loan_cost(y):
+        if fee == 0 or y > spread:
+            return 0
+        rest = fee - (fee // spread) * spread
+        return fee // spread + (rest if y == 1 else 0)
+
+    other = to_cents(tax_in["otherTaxableIncome"]) if "otherTaxableIncome" in tax_in else None
+    tax_year = int(date[:4])
+    mrate = F(D(str(op["marginalTaxRatePct"]))) / 100
+
+    def tax_on(result):
+        if other is None:
+            return round_half_up(result * mrate)
+        return tariff_tax(tax_year, other + result) - tariff_tax(tax_year, other)
+
+    lvo = own != "wholeBuilding"
+    net_rent = 12 * (rent - lines["vacancy"])
+    costs = 12 * (lines.get("management", 0) + lines["maintenance"])
+    reserve = 12 * lines.get("reserveFund", 0)
+    rows, taken = [], 0
+    for y in range(1, (25 if lvo else 5) + 1):
+        interest = int_by_year[y - 1] if y <= len(int_by_year) else 0
+        payments = pay_by_year[y - 1] if y <= len(pay_by_year) else 0
+        afa_rate = F(15, 1000) * (3 if y == 1 else 2 if y == 2 else 1)
+        afa = min(round_half_up(building * afa_rate), building - taken)
+        taken += afa
+        lc = loan_cost(y)
+        result = net_rent - interest - afa - costs - lc
+        t = tax_on(result)
+        cf_before = 12 * noi - payments
+        rows.append({
+            "year": y,
+            "netRentalIncomeCents": net_rent,
+            "interestCents": interest,
+            "afaCents": afa,
+            "operatingCostsCents": costs,
+            "loanCostsCents": lc,
+            "reserveNotDeductedCents": reserve,
+            "resultCents": result,
+            "taxCents": t,
+            "cashFlowBeforeTaxCents": cf_before,
+            "cashFlowAfterTaxCents": cf_before - t,
+        })
+    for r_ in rows[:3]:
+        deriv.append(f"Year {r_['year']}: result {eur(D(r_['resultCents']) / 100)} (interest {eur(D(r_['interestCents']) / 100)}, AfA {eur(D(r_['afaCents']) / 100)}), tax {eur(D(r_['taxCents']) / 100)}, cash flow after tax {eur(D(r_['cashFlowAfterTaxCents']) / 100)}")
+
+    if lvo:
+        lr = [r_["resultCents"] - reserve for r_ in rows[:25]]
+        cum = sum(lr)
+        status = "totalSurplus" if cum > 0 else "noTotalSurplus"
+        from_year = next((k for k in range(1, 26) if all(sum(lr[:j]) > 0 for j in range(k, 26))), None)
+        lieb = {"status": status, "cumulativeResultCents": cum, "totalSurplusFromYear": from_year}
+        deriv.append(f"Liebhaberei: 25-year cumulative result with reserve deducted {eur(D(cum) / 100)}, {status}")
+        if status == "noTotalSurplus":
+            flags.append("tax.liebhabereiRisk")
+    else:
+        lieb = {"status": "notChecked", "cumulativeResultCents": None, "totalSurplusFromYear": None}
+    if other is None and "marginalTaxRatePct" not in given:
+        flags.append("assumption.taxRate")
+    if not complete:
+        flags.append("assumption.landShare")
+    if 2024 <= prop.get("buildingYear", 0) <= 2026:
+        flags.append("tax.newBuildAfaNotModelled")
+
+    tax = {
+        "method": "marginalRate" if other is None else "tariff",
+        "marginalRatePct": float((mrate if other is None else bracket_rate(tax_year, other)) * 100),
+        "landSharePct": float(share * 100),
+        "afa": {"costBasisCents": cost_basis, "landShareCents": land, "buildingCents": building},
+        "loanCosts": {"totalCents": fee, "spreadYears": spread} if fee > 0 else None,
+        "years": rows[:5],
+        "monthlyCashFlowAfterTaxYear1Cents": round_half_up(F(rows[0]["cashFlowAfterTaxCents"], 12)),
+        "liebhaberei": lieb,
+    }
+
     return {
         "name": case["name"],
         "description": case["description"],
@@ -374,11 +507,13 @@ def underwrite(case):
             "financing": financing,
             "operating": lines,
             "metrics": metrics,
-            "rentRegulation": {"status": status, "basis": basis},
+            "rentRegulation": {"status": status_mrg, "basis": basis},
+            "tax": tax,
             "flags": sorted(flags),
         },
         "derivation": deriv,
         "oracle": "Independent Python Fraction implementation (exact annuity, explicit rounding).",
+        **({"history": HISTORY[case["name"]]} if case["name"] in HISTORY else {}),
     }
 
 UW_CASES = [
@@ -451,6 +586,84 @@ UW_CASES = [
                "rent": {"netColdMonthly": 1050, "operatingCostsMonthly": 180}}},
 ]
 
+# Cases added in engine 0.3.0 (tax module)
+UW_CASES += [
+    {"name": "tariff-salary-small-town",
+     "description": "Employee with €45,000 other income buys a condo in a small town (28,000 inhabitants, land €220/m²): exact § 33 tariff, 20% land share.",
+     "input": {"valuationDate": "2026-10-18", "purchasePrice": 210000,
+               "broker": {"commissionPct": 3, "sellerPaysCommission": True},
+               "financing": {"loanAmount": 150000, "ratePct": 3.8, "termYears": 25},
+               "property": {"livingAreaM2": 62, "ownership": "condominium", "buildingPermitDate": "1999-05-01", "unitsInBuilding": 8},
+               "rent": {"netColdMonthly": 820, "operatingCostsMonthly": 160},
+               "ownerCosts": {"reserveFundMonthly": 75},
+               "tax": {"otherTaxableIncome": 45000, "municipalityInhabitants": 28000, "averageLandPricePerM2": 220}}},
+    {"name": "tariff-low-other-income",
+     "description": "Other income of €9,000 sits in the 0% bracket: early rental losses save no tax, later profits are taxed from the first euro above the limit.",
+     "input": {"valuationDate": "2026-10-18", "purchasePrice": 180000, "broker": "none",
+               "financing": {"loanAmount": 120000, "ratePct": 4, "termYears": 30},
+               "property": {"livingAreaM2": 52, "ownership": "condominium", "buildingPermitDate": "1993-02-01"},
+               "rent": {"netColdMonthly": 700, "operatingCostsMonthly": 140},
+               "tax": {"otherTaxableIncome": 9000}}},
+    {"name": "vienna-large-building-30pct",
+     "description": "Condo in a 24-unit building in a city of 2 million: 30% land share; marginal rate set to 48%.",
+     "input": {"valuationDate": "2026-10-18", "purchasePrice": 350000,
+               "broker": {"commissionPct": 3, "sellerPaysCommission": True},
+               "financing": {"loanAmount": 250000, "ratePct": 3.7, "termYears": 30},
+               "property": {"livingAreaM2": 75, "ownership": "condominium", "buildingPermitDate": "2004-09-01", "unitsInBuilding": 24},
+               "rent": {"netColdMonthly": 1250, "operatingCostsMonthly": 220},
+               "ownerCosts": {"reserveFundMonthly": 95},
+               "tax": {"municipalityInhabitants": 2000000},
+               "assumptions": {"marginalTaxRatePct": 48}}},
+    {"name": "land-share-from-expert-opinion",
+     "description": "Cash purchase with a land share of 25.5% from an expert opinion; no loan, so no loan costs; 30% marginal rate.",
+     "input": {"valuationDate": "2026-10-18", "purchasePrice": 195000, "broker": "none",
+               "property": {"livingAreaM2": 55, "ownership": "condominium", "buildingPermitDate": "1985-03-01"},
+               "rent": {"netColdMonthly": 760, "operatingCostsMonthly": 150},
+               "ownerCosts": {"reserveFundMonthly": 60},
+               "tax": {"landSharePct": 25.5},
+               "assumptions": {"marginalTaxRatePct": 30}}},
+    {"name": "liebhaberei-risk-high-leverage",
+     "description": "Loan above the price at 4.5% over 35 years with a modest rent: no total surplus within 25 years.",
+     "input": {"valuationDate": "2026-10-18", "purchasePrice": 300000, "broker": "none",
+               "financing": {"loanAmount": 330000, "ratePct": 4.5, "termYears": 35},
+               "property": {"livingAreaM2": 65, "ownership": "condominium", "buildingPermitDate": "2010-06-01"},
+               "rent": {"netColdMonthly": 900, "operatingCostsMonthly": 150}}},
+    {"name": "short-loan-fee-deducted-at-once",
+     "description": "Two-year loan: the mortgage registration fee covers only the current and the following year, so it is deducted in year 1.",
+     "input": {"valuationDate": "2026-10-18", "purchasePrice": 160000, "broker": "none",
+               "financing": {"loanAmount": 60000, "ratePct": 3, "termYears": 2},
+               "property": {"livingAreaM2": 45, "ownership": "condominium", "buildingPermitDate": "1979-11-01"},
+               "rent": {"netColdMonthly": 650, "operatingCostsMonthly": 120}}},
+    {"name": "new-build-2025-tariff-2027",
+     "description": "Valuation date in 2027 (2027 tariff), new building completed 2025 (flag only), €120,000 other income in the 50% bracket, 30-unit building in a city of 300,000.",
+     "input": {"valuationDate": "2027-02-15", "purchasePrice": 420000,
+               "broker": {"commissionPct": 3, "sellerPaysCommission": True},
+               "financing": {"loanAmount": 300000, "ratePct": 3.5, "termYears": 30},
+               "property": {"livingAreaM2": 70, "ownership": "condominium", "buildingYear": 2025, "unitsInBuilding": 30},
+               "rent": {"netColdMonthly": 1500, "operatingCostsMonthly": 250},
+               "tax": {"otherTaxableIncome": 120000, "municipalityInhabitants": 300000}}},
+    {"name": "top-bracket-exactly-1m",
+     "description": "Other income exactly €1,000,000: the next euro is taxed at 55%, so a cash purchase's profit is taxed at 55%.",
+     "input": {"valuationDate": "2026-10-18", "purchasePrice": 250000, "broker": "none",
+               "property": {"livingAreaM2": 60, "ownership": "condominium", "buildingPermitDate": "2001-04-01", "unitsInBuilding": 12},
+               "rent": {"netColdMonthly": 1100, "operatingCostsMonthly": 180},
+               "ownerCosts": {"reserveFundMonthly": 70},
+               "tax": {"otherTaxableIncome": 1000000, "averageLandPricePerM2": 650}}},
+    {"name": "tariff-2025-bracket-edge",
+     "description": "Valuation date 2025-12-31, other income exactly at the 2025 limit of €35,836: a loss saves 30%, the next euro of profit costs 40%.",
+     "input": {"valuationDate": "2025-12-31", "purchasePrice": 230000,
+               "broker": {"commissionPct": 3, "sellerPaysCommission": True},
+               "financing": {"loanAmount": 170000, "ratePct": 3.6, "termYears": 25},
+               "property": {"livingAreaM2": 58, "ownership": "condominium", "buildingPermitDate": "1996-10-01"},
+               "rent": {"netColdMonthly": 880, "operatingCostsMonthly": 160},
+               "tax": {"otherTaxableIncome": 35836}}},
+]
+
+HISTORY = {
+    c["name"]: ["Engine 0.3.0: added expected.tax and the tax flags (assumption.taxRate, assumption.landShare, tax.*) for the new tax module. Earlier expectations unchanged."]
+    for c in UW_CASES[:9]
+}
+
 UW_OUT = ROOT / "underwrite"
 UW_OUT.mkdir(parents=True, exist_ok=True)
 for c in UW_CASES:
@@ -460,3 +673,6 @@ for c in UW_CASES:
     m = e["metrics"]
     print(f"{c['name']}: CF {m['monthlyCashFlowCents']/100:,.2f}/mo, gross {m['grossYieldPct']}%, net {m['netYieldPct']}%, "
           f"DSCR {m['dscr']}, BE {m['breakEvenRentCents']}, MRG {e['rentRegulation']['status']} flags={e['flags']}")
+    t = e["tax"]
+    print(f"    tax {t['method']} {t['marginalRatePct']}%, land {t['landSharePct']}%, after-tax CF y1 {t['monthlyCashFlowAfterTaxYear1Cents']/100:,.2f}/mo, "
+          f"y1 result {t['years'][0]['resultCents']/100:,.2f} tax {t['years'][0]['taxCents']/100:,.2f}, Liebhaberei {t['liebhaberei']}")

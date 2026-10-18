@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
-import { underwrite, type UnderwriteResult } from "@austria-property/engine";
+import { underwrite, type UnderwriteInput, type UnderwriteResult } from "@austria-property/engine";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createServer, SERVER_VERSION, viennaToday } from "../src/server.js";
 
@@ -63,6 +63,18 @@ describe("MCP server", () => {
     expect(data.metrics).toMatchObject(MEIDLING.expected.metrics);
     expect(texts(r)[0]).toMatch(/cash flow before tax -€246\.16/);
     expect(texts(r)[0]).toMatch(/Break-even rent: €1,051\.42/);
+    expect(texts(r)[0]).toMatch(/\| 1 \| -€6,345\.93 \| -€2,538\.37 \| -€34\.63 \|/);
+    expect(texts(r)[0]).toMatch(/Liebhaberei \(25 years\): total surplus from year 20/);
+  });
+
+  it("passes tax facts through to the engine", async () => {
+    const input = { ...MEIDLING.input, tax: { otherTaxableIncome: 45_000, municipalityInhabitants: 2_000_000 } };
+    const r = await call("underwrite_property", input);
+    expect(r.isError).toBeFalsy();
+    const data = json<UnderwriteResult>(r);
+    expect(data.tax.method).toBe("tariff");
+    expect(data).toEqual(underwrite(input as UnderwriteInput));
+    expect(texts(r)[0]).toMatch(/Income tax: § 33 tariff 2026 on €45,000\.00 other income, bracket 40%\./);
   });
 
   it("uses today's date when no valuation date is given", async () => {

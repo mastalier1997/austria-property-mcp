@@ -15,7 +15,30 @@ export type RuleId =
   | "at.weg.minReservePerM2"
   | "at.mrg.condominiumPermitAfter"
   | "at.mrg.newBuildingPermitAfter"
-  | "at.mrg.exclusionMaxUnits";
+  | "at.mrg.exclusionMaxUnits"
+  | "at.estg.afa.buildingRate"
+  | "at.estg.afa.firstYearMultiplier"
+  | "at.estg.afa.secondYearMultiplier"
+  | "at.grundanteil.smallTownPct"
+  | "at.grundanteil.largeBuildingPct"
+  | "at.grundanteil.standardPct"
+  | "at.grundanteil.inhabitantsLimit"
+  | "at.grundanteil.landPriceLimitPerM2"
+  | "at.grundanteil.unitsLimit"
+  | "at.lvo.smallLettingYears"
+  | "at.estg.tariff.limit1"
+  | "at.estg.tariff.limit2"
+  | "at.estg.tariff.limit3"
+  | "at.estg.tariff.limit4"
+  | "at.estg.tariff.limit5"
+  | "at.estg.tariff.limit6"
+  | "at.estg.tariff.rate1"
+  | "at.estg.tariff.rate2"
+  | "at.estg.tariff.rate3"
+  | "at.estg.tariff.rate4"
+  | "at.estg.tariff.rate5"
+  | "at.estg.tariff.rate6"
+  | "at.estg.tariff.rate7";
 
 /**
  * - "ppm": rate in parts per million (1% = 10_000)

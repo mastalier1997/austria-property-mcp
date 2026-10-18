@@ -58,12 +58,42 @@ export function summariseUnderwrite(r: UnderwriteResult): string {
     `Returns: gross yield ${pct(m.grossYieldPct)}, net yield ${pct(m.netYieldPct)}, cash-on-cash ${pct(m.cashOnCashPct)}, DSCR ${m.dscr ?? "n/a"}.`,
     `Break-even rent: ${m.breakEvenRentCents === null ? "not reachable" : formatEur(m.breakEvenRentCents)}${m.breakEvenRentPerM2 === null ? "" : ` (€${m.breakEvenRentPerM2.toFixed(2)} per m²)`}.`,
     `Rent regulation (MRG): ${r.rentRegulation.status}. ${r.rentRegulation.summary}`,
+    ...taxLines(r),
     "",
     ...flagLines(r.flags),
     "",
     r.disclaimer,
   );
   return lines.join("\n");
+}
+
+function taxLines(r: UnderwriteResult): string[] {
+  const t = r.tax;
+  // Half away from zero, like the engine.
+  const perMonth = (cents: number) => formatEur(Math.sign(cents) * Math.round(Math.abs(cents) / 12));
+  const method =
+    t.method === "tariff"
+      ? `§ 33 tariff ${t.tariffYear} on ${formatEur(t.otherTaxableIncomeCents ?? 0)} other income, bracket ${t.marginalRatePct}%`
+      : `flat ${t.marginalRatePct}% marginal rate`;
+  const rows = t.years.map(
+    (y) =>
+      `| ${y.year} | ${formatEur(y.resultCents)} | ${formatEur(y.taxCents)} | ${perMonth(y.cashFlowAfterTaxCents)} |`,
+  );
+  const l = t.liebhaberei;
+  const liebhaberei =
+    l.status === "notChecked"
+      ? `Liebhaberei: not checked. ${l.explanation}`
+      : `Liebhaberei (${l.horizonYears} years): ${l.status === "totalSurplus" ? `total surplus from year ${l.totalSurplusFromYear}` : "no total surplus"}, cumulative ${formatEur(l.cumulativeResultCents ?? 0)}.`;
+  return [
+    "",
+    `Income tax: ${method}. AfA on ${formatEur(t.afa.buildingCents)} building value (land share ${t.landShare.pct}%), ${t.afa.year1Pct}% in year 1, ${t.afa.year2Pct}% in year 2, then ${t.afa.fromYear3Pct}%.`,
+    "",
+    "| Year | Rental result | Tax (− = saving) | Cash flow after tax / month |",
+    "|---|---|---|---|",
+    ...rows,
+    "",
+    liebhaberei,
+  ];
 }
 
 export function formatRuleValue(rule: Rule): string {

@@ -17,6 +17,7 @@ export {
 export { brokerCap, type BrokerCap } from "./calc/brokerCap.js";
 export { HEURISTICS, underwrite, UNDERWRITE_LIMITATIONS } from "./calc/underwrite.js";
 export { annuityPayment, annuitySchedule, type AnnuitySchedule } from "./calc/financing.js";
+export { bracketRate, incomeTax, landShare, TAX_YEARS_SHOWN, tariffFor, type LandShareFacts, type Tariff } from "./calc/tax.js";
 export {
   BUILDING_YEAR_MARGIN,
   type Ownership,
@@ -74,6 +75,14 @@ export type {
   RentInput,
   RuleUsed,
   FinancingResult,
+  AfaResult,
+  LandShareResult,
+  LiebhabereiResult,
+  LiebhabereiStatus,
+  LoanCostsResult,
+  TaxInput,
+  TaxResult,
+  TaxYear,
   UnderwriteAssumptionId,
   UnderwriteFinancingInput,
   UnderwriteInput,

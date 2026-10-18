@@ -2,7 +2,7 @@
 
 Every statutory number the engine uses, where it comes from, and how it was checked. The code is the source of truth (`packages/engine/src/rules/`); a test fails if a rule id is missing from this page.
 
-**Coverage:** valuation dates from **2025-04-01** to **2027-12-31**. Earlier dates throw `RuleNotCoveredError`, because the court-fee amounts before the April 2025 valorisation have not been verified. From 2028 the statutory minimum repair reserve is re-indexed; until that amount is added, underwriting needs `ownerCosts.reserveFundMonthly` for 2028 dates.
+**Coverage:** valuation dates from **2025-04-01** to **2027-12-31**. Earlier dates throw `RuleNotCoveredError`, because the court-fee amounts before the April 2025 valorisation have not been verified. From 2028 the statutory minimum repair reserve is re-indexed; until that amount is added, underwriting needs `ownerCosts.reserveFundMonthly` for 2028 dates. The income tax tariff is known up to 2027, so `tax.otherTaxableIncome` works only for valuation dates up to 2027-12-31; the marginal-rate method has no such limit.
 
 **Last full check:** 2026-10-18, against the statute texts in RIS.
 
@@ -120,6 +120,93 @@ Rules of thumb for flags, not law (`HEURISTICS` in code):
 | `cashflow.negative` | monthly cash flow below zero |
 | `cashflow.operatingLoss` | NOI below zero |
 
+## Income tax on rent
+
+The `tax` section of `underwrite()` estimates the yearly rental result (Einkünfte aus Vermietung und Verpachtung), the income tax it causes or saves, the cash flow after tax and whether the letting passes the Liebhaberei test.
+
+### Depreciation (AfA)
+
+| Rule id | Value | Valid | Legal basis |
+|---|---|---|---|
+| `at.estg.afa.buildingRate` | 1.5% a year | from 2025-04-01 | [§ 16 Abs. 1 Z 8 lit. d EStG 1988](https://www.ris.bka.gv.at/NormDokument.wxe?Abfrage=Bundesnormen&Gesetzesnummer=10004570&Paragraf=16) |
+| `at.estg.afa.firstYearMultiplier` | at most 3 × in year 1 (4.5%) | from 2025-04-01 | § 16 Abs. 1 Z 8 lit. e EStG 1988 |
+| `at.estg.afa.secondYearMultiplier` | at most 2 × in year 2 (3%) | from 2025-04-01 | § 16 Abs. 1 Z 8 lit. e EStG 1988 |
+
+- Checked in the versions valid 2025-12-24 to 2026-12-31 and from 2027-01-01; the wording is the same. Earlier versions not checked.
+- The accelerated rates apply to buildings acquired after 30 June 2020 (transitional rule in § 124b, not checked separately), which covers every purchase in the engine's date range. The half-year rule of § 7 Abs. 2 does not apply, so year 1 gets the full 4.5% whatever the month.
+- The engine takes the accelerated rates in full. They are maximums; a taxpayer may claim less.
+- **Base:** price plus acquisition costs, minus the mortgage registration fee (a cost of borrowing, below), minus the land share. VAT on broker and contract fees stays in the base, as for a landlord using the small-business exemption.
+- **Rounding:** each year's AfA is base × rate, rounded half up to the cent, and never more than the remaining building value.
+- **Not modelled:** a temporary higher AfA for residential buildings completed in 2024 to 2026 that meet an ecological standard. Its statute text has not been checked; the engine only flags such buildings (`tax.newBuildAfaNotModelled`).
+
+### Land share (Grundanteilverordnung 2016)
+
+| Rule id | Value | Valid | Legal basis |
+|---|---|---|---|
+| `at.grundanteil.smallTownPct` | 20% | from 2016-01-01 | [§ 2 Abs. 1 GrundanteilV 2016](https://www.ris.bka.gv.at/GeltendeFassung.wxe?Abfrage=Bundesnormen&Gesetzesnummer=20009521) |
+| `at.grundanteil.largeBuildingPct` | 30% | from 2016-01-01 | § 2 Abs. 2 GrundanteilV 2016 |
+| `at.grundanteil.standardPct` | 40% | from 2016-01-01 | § 2 Abs. 2 GrundanteilV 2016 |
+| `at.grundanteil.inhabitantsLimit` | 100,000 inhabitants | from 2016-01-01 | § 2 Abs. 1 and 2 GrundanteilV 2016 |
+| `at.grundanteil.landPriceLimitPerM2` | €400 per m² | from 2016-01-01 | § 2 Abs. 1 and 2 GrundanteilV 2016 |
+| `at.grundanteil.unitsLimit` | 10 units | from 2016-01-01 | § 2 Abs. 2 GrundanteilV 2016 |
+
+- BGBl. II Nr. 99/2016, no amendments, checked on 2026-10-18.
+- **20%** in municipalities under 100,000 inhabitants where building land (zoned and fully serviced, *baureifes Land*) costs under €400/m² on average. **Elsewhere 30%** if the building has more than 10 flats or business units, **40%** if it has up to 10. Each started 400 m² of business space counts as one unit.
+- Inhabitants are those of the latest census published before the year AfA is first claimed (§ 2 Abs. 3).
+- A different share can be proven, e.g. by an expert opinion, and the presumption does not apply where the actual share differs by at least 50% (§ 3). Pass `tax.landSharePct` in that case.
+- **Missing facts** (heuristic): the 20% and 30% shares need facts, so without them the engine uses 40% (the share § 16 Abs. 1 Z 8 lit. d presumes too) and flags `assumption.landShare`, naming the inputs that would refine it.
+
+### Income tax
+
+| Rule id | Value | Valid | Legal basis |
+|---|---|---|---|
+| `at.estg.tariff.limit1` | €13,308 / €13,539 / €13,846 | calendar years 2025 / 2026 / 2027 | [§ 33 Abs. 1 EStG 1988](https://www.ris.bka.gv.at/NormDokument.wxe?Abfrage=Bundesnormen&Gesetzesnummer=10004570&Paragraf=33) |
+| `at.estg.tariff.limit2` | €21,617 / €21,992 / €22,491 | 2025 / 2026 / 2027 | § 33 Abs. 1 EStG 1988 |
+| `at.estg.tariff.limit3` | €35,836 / €36,458 / €37,285 | 2025 / 2026 / 2027 | § 33 Abs. 1 EStG 1988 |
+| `at.estg.tariff.limit4` | €69,166 / €70,365 / €71,960 | 2025 / 2026 / 2027 | § 33 Abs. 1 EStG 1988 |
+| `at.estg.tariff.limit5` | €103,072 / €104,859 / €107,236 | 2025 / 2026 / 2027 | § 33 Abs. 1 EStG 1988 |
+| `at.estg.tariff.limit6` | €1,000,000 | 2025-04-01 – 2029-12-31 | § 33 Abs. 1 EStG 1988 |
+| `at.estg.tariff.rate1` … `at.estg.tariff.rate6` | 0%, 20%, 30%, 40%, 48%, 50% | from 2025-04-01 | § 33 Abs. 1 EStG 1988 |
+| `at.estg.tariff.rate7` | 55% above €1 million | 2025-04-01 – 2029-12-31 | § 33 Abs. 1 EStG 1988 |
+
+- 2025 amounts checked in the version valid 2025-07-01 to 2025-12-23 (BGBl. I Nr. 25/2025); 2026 in the versions from 2026-01-01 (BGBl. I Nr. 97/2025) and 2026-07-30 (BGBl. I Nr. 62/2026); 2027 from the "für 2027" footnotes in the version from 2026-07-30.
+- The rate ids are `at.estg.tariff.rate1`, `at.estg.tariff.rate2`, `at.estg.tariff.rate3`, `at.estg.tariff.rate4`, `at.estg.tariff.rate5` and `at.estg.tariff.rate6`.
+- **Two methods:**
+  - With `tax.otherTaxableIncome`: tax = tariff(other income + rental result) − tariff(other income), using the tariff of the valuation date's year for every projected year. Each tariff amount is computed exactly and rounded half up to the cent (§ 204 BAO). A loss that pushes income below the first limit saves nothing more.
+  - Otherwise: tax = rental result × `marginalTaxRatePct` (default 40%), rounded to the cent, half away from zero. A loss saves tax at the same rate, which assumes enough other income to absorb it.
+- Tax credits (Absetzbeträge), other deductions, social security and later valorisation of the brackets are ignored. Losses are offset only within the same year; the engine carries nothing forward.
+
+### Rental result per year
+
+- Tax years are treated as loan years, and year 1 has a full year of rent.
+- **Income:** 12 × (net cold rent − vacancy line). Operating costs passed to the tenant are income and expense at once and cancel out, except the vacancy share, which is in the vacancy line.
+- **Deductions:** loan interest of that year (from the monthly schedule), AfA, 12 × (management + owner's maintenance), and the share of the mortgage registration fee.
+- **Mortgage registration fee:** treated as a cost of borrowing and spread evenly over the loan term ([§ 19 Abs. 3 EStG 1988](https://www.ris.bka.gv.at/NormDokument.wxe?Abfrage=Bundesnormen&Gesetzesnummer=10004570&Paragraf=19)); year 1 takes the rounding remainder. For loans of up to two years it is deducted in year 1, because prepayments for only the current and the following year are not spread. Applying § 19 Abs. 3 to this fee is common practice; it was not checked against case law.
+- **Repair reserve:** contributions are deductible only when the reserve is spent on repairs ([BFG 23.10.2014, RV/3100573/2014](https://linda.lindeverlag.at/Dokument/153221/); also UFS 29.2.2008, RV/1908-W/07). The yearly rows leave them out (`reserveNotDeductedCents`).
+- **Cash flow after tax:** 12 × NOI − loan payments of that year − tax. Payments stop after the term.
+- The output shows years 1 to 5 and the year-1 monthly cash flow after tax (yearly ÷ 12, half away from zero).
+
+### Liebhaberei
+
+| Rule id | Value | Valid | Legal basis |
+|---|---|---|---|
+| `at.lvo.smallLettingYears` | total surplus within 25 years | from 2025-04-01 | [§ 2 Abs. 4 iVm § 1 Abs. 2 Z 3 LVO](https://www.ris.bka.gv.at/GeltendeFassung.wxe?Abfrage=Bundesnormen&Gesetzesnummer=10004804) |
+
+- Losses from letting condominiums and houses are presumed Liebhaberei unless the letting is expected to produce a total surplus within 25 years from the start of letting (at most 28 years from the first expenses). Then the losses do not reduce tax.
+- The engine projects the rental result for 25 years with rent and costs held constant and **deducts the repair reserve** in each year, assuming it is spent and deducted within the horizon. `totalSurplusFromYear` is the first year from which the cumulative result stays positive.
+- Constant rents make the projection conservative; a real prognosis would usually index the rent.
+- Whole buildings fall under § 1 Abs. 1 LVO (income presumed) and are not checked.
+- Checked in the version current on 2026-10-18.
+
+### Tax flags
+
+| Flag | When |
+|---|---|
+| `tax.liebhabereiRisk` (warn) | no total surplus within 25 years |
+| `assumption.taxRate` (info) | the default 40% marginal rate was used |
+| `assumption.landShare` (info) | the land share had to assume missing facts |
+| `tax.newBuildAfaNotModelled` (info) | building completed 2024 to 2026 |
+
 ## Assumptions
 
 Not set by law; every one can be overridden in `assumptions`.
@@ -133,6 +220,7 @@ Not set by law; every one can be overridden in `assumptions`.
 | `vacancyPct` | 4% of gross rent | [GELD-Magazin 02/2021](https://www.infina.at/fileadmin/content/Presse/202102_GELD_Magazin_Anlegerwohnungen_Richtig_kalkulieren.pdf), tax adviser C. Klausner: 3–5% of gross annual rent |
 | `maintenancePctPerYear` | 0.2% of price + acquisition costs | Same article: 0.2% of acquisition costs per year |
 | `managementPct` | 0% of net cold rent | Owner manages the letting |
+| `marginalTaxRatePct` | 40% of the rental result | § 33 EStG: 40% applies to taxable income from €36,458 to €70,365 (2026), a typical range for employed investors. Not used when `tax.otherTaxableIncome` is given |
 
 The output lists which assumptions were defaulted, and flags the ones that move the result most.
 
@@ -140,6 +228,7 @@ The output lists which assumptions were defaulted, and flags the ones that move 
 
 - All amounts are integer cents; rates are integer parts per million. Products use BigInt, so nothing is lost to floating point.
 - Rounding follows the law where the law says something (GGG: up to the euro; BAO: commercial to the cent). Broker and contract fees, where no rule exists, round commercially to the cent.
+- Signed amounts (a tax saving, a negative monthly cash flow) round half away from zero.
 
 ## Known limitations
 
@@ -148,7 +237,7 @@ The output lists which assumptions were defaulted, and flags the ones that move 
 - No exemptions, e.g. the time-limited Grundbuch fee exemption for buying a primary residence. The engine targets buy-to-let.
 - Rules are applied as valid on `valuationDate`. Grundbuch fees really depend on when the fee claim arises, usually at registration.
 - Bank fees, valuation fees and signature certification are not included in acquisition costs.
-- Cash flow is before income tax; AfA and rental-income tax come later.
+- Metrics are before income tax; the tax section adds the after-tax view with the simplifications listed under "Income tax on rent".
 - Rent, costs and the interest rate are held constant; no indexation or rate resets.
 - Rent inputs are net of VAT; VAT on rent is not modelled.
 
@@ -159,6 +248,10 @@ The output lists which assumptions were defaulted, and flags the ones that move 
 - Extend coverage before 2025-04-01 if historical analysis is needed.
 - Check the Wirtschaftskammer's 2024 notice for the €1.06 reserve amount; add the 2028 amount when published (by November 2027).
 - Compute Richtwert caps for fully regulated flats (Richtwerte per Bundesland via RIS).
+- Add the 2028 tariff amounts when they are published.
+- Check the statute text of the temporary AfA for buildings completed 2024–2026 before modelling it.
+- Check the tax treatment of the mortgage registration fee (§ 19 Abs. 3 EStG) against the EStR and case law.
+- Check § 2 Abs. 3 LVO for whole buildings.
 
 ## Adding or changing a rule
 

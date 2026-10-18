@@ -29,6 +29,16 @@ interface GoldenUnderwrite {
       breakEvenRentPerM2: number | null;
     };
     rentRegulation: { status: string; basis: string };
+    tax: {
+      method: string;
+      marginalRatePct: number;
+      landSharePct: number;
+      afa: { costBasisCents: number; landShareCents: number; buildingCents: number };
+      loanCosts: { totalCents: number; spreadYears: number } | null;
+      years: Record<string, number>[];
+      monthlyCashFlowAfterTaxYear1Cents: number;
+      liebhaberei: { status: string; cumulativeResultCents: number | null; totalSurplusFromYear: number | null };
+    };
     flags: string[];
   };
 }
@@ -41,7 +51,7 @@ const cases: GoldenUnderwrite[] = readdirSync(dir)
 
 describe("golden underwriting cases", () => {
   it("has fixtures", () => {
-    expect(cases.length).toBeGreaterThanOrEqual(9);
+    expect(cases.length).toBeGreaterThanOrEqual(18);
   });
 
   it.each(cases.map((c) => [c.name, c] as const))("%s", (_name, golden) => {
@@ -64,6 +74,21 @@ describe("golden underwriting cases", () => {
     expect(result.metrics.annualCashFlowCents).toBe(e.metrics.monthlyCashFlowCents * 12);
 
     expect({ status: result.rentRegulation.status, basis: result.rentRegulation.basis }).toEqual(e.rentRegulation);
+
+    const t = result.tax;
+    expect(t.method).toBe(e.tax.method);
+    expect(t.marginalRatePct).toBe(e.tax.marginalRatePct);
+    expect(t.landShare.pct).toBe(e.tax.landSharePct);
+    expect(t.afa).toMatchObject(e.tax.afa);
+    if (e.tax.loanCosts === null) expect(t.loanCosts).toBeNull();
+    else expect(t.loanCosts).toMatchObject(e.tax.loanCosts);
+    expect(t.years).toEqual(e.tax.years);
+    expect(t.monthlyCashFlowAfterTaxYear1Cents).toBe(e.tax.monthlyCashFlowAfterTaxYear1Cents);
+    expect({
+      status: t.liebhaberei.status,
+      cumulativeResultCents: t.liebhaberei.cumulativeResultCents,
+      totalSurplusFromYear: t.liebhaberei.totalSurplusFromYear,
+    }).toEqual(e.tax.liebhaberei);
     expect(result.flags.map((f) => f.id).sort()).toEqual(e.flags);
   });
 });

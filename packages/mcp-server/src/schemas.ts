@@ -74,6 +74,10 @@ const operatingAssumptionFields = {
     .number()
     .optional()
     .describe("Letting/management fees paid by the owner, % of net cold rent. Default 0 (self-managed)."),
+  marginalTaxRatePct: z
+    .number()
+    .optional()
+    .describe("Owner's marginal income tax rate in %, applied to the rental result. Default 40. Ignored when tax.otherTaxableIncome is given."),
 };
 
 export const acquisitionInput = {
@@ -140,6 +144,28 @@ export const underwriteInput = {
     })
     .optional()
     .describe("Costs the owner pays that cannot be passed on to the tenant."),
+  tax: z
+    .object({
+      otherTaxableIncome: z
+        .number()
+        .optional()
+        .describe("Owner's other taxable income per year in EUR (e.g. gross salary minus social security). Enables the exact income tax tariff."),
+      landSharePct: z
+        .number()
+        .optional()
+        .describe("Land share of the purchase in %, if proven (e.g. expert opinion). Otherwise presumed at 20, 30 or 40% by law."),
+      municipalityInhabitants: z
+        .number()
+        .int()
+        .optional()
+        .describe("Inhabitants of the municipality (e.g. Vienna ≈ 2,000,000). Decides the presumed land share together with the land price."),
+      averageLandPricePerM2: z
+        .number()
+        .optional()
+        .describe("Average price of building land in the municipality, EUR per m². Under 400 in a town under 100,000 inhabitants → 20% land share."),
+    })
+    .optional()
+    .describe("Facts for the income tax on rent and the depreciation (AfA). Omit to use flagged defaults (40% marginal rate, 40% land share)."),
   assumptions: z
     .object({ ...acquisitionAssumptionFields, ...operatingAssumptionFields })
     .optional()

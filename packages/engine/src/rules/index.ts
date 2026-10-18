@@ -3,6 +3,7 @@ import { GREST_RULES } from "./grest.js";
 import { GRUNDBUCH_RULES } from "./grundbuch.js";
 import { MAKLER_RULES } from "./makler.js";
 import { MRG_RULES } from "./mrg.js";
+import { TAX_RULES } from "./tax.js";
 import type { DateRule, NumericRule, Rule, RuleId } from "./types.js";
 import { UST_RULES } from "./ust.js";
 import { WEG_RULES } from "./weg.js";
@@ -17,6 +18,7 @@ export const RULE_CATALOGUE: readonly Rule[] = Object.freeze([
   ...UST_RULES,
   ...WEG_RULES,
   ...MRG_RULES,
+  ...TAX_RULES,
 ]);
 
 /** Thrown when no version of a rule covers the requested date. */

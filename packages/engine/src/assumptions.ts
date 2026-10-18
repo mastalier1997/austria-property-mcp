@@ -80,6 +80,8 @@ export interface OperatingAssumptions {
   maintenancePctPerYear: number;
   /** Property management paid by the owner, % of net cold rent. */
   managementPct: number;
+  /** Marginal income tax rate on the rental result, %. Used unless tax.otherTaxableIncome is given. */
+  marginalTaxRatePct: number;
 }
 
 export type OperatingAssumptionId = keyof OperatingAssumptions;
@@ -116,6 +118,17 @@ export const OPERATING_ASSUMPTIONS: {
     description: "Letting or management fees paid by the owner, % of net cold rent. 0 means self-managed.",
     source: { label: "Assumption: owner manages the letting" },
   },
+  marginalTaxRatePct: {
+    default: 40,
+    min: 0,
+    max: 55,
+    description:
+      "Marginal income tax rate applied to the rental result (profit or loss). Pass tax.otherTaxableIncome instead to use the exact tariff.",
+    source: {
+      label: "§ 33 Abs. 1 EStG 1988: 40% applies to taxable income from €36,458 to €70,365 (2026), a typical range for employed investors",
+      url: "https://www.ris.bka.gv.at/NormDokument.wxe?Abfrage=Bundesnormen&Gesetzesnummer=10004570&Paragraf=33",
+    },
+  },
 };
 
 export function defaultOperatingAssumptions(): OperatingAssumptions {
@@ -123,6 +136,7 @@ export function defaultOperatingAssumptions(): OperatingAssumptions {
     vacancyPct: OPERATING_ASSUMPTIONS.vacancyPct.default,
     maintenancePctPerYear: OPERATING_ASSUMPTIONS.maintenancePctPerYear.default,
     managementPct: OPERATING_ASSUMPTIONS.managementPct.default,
+    marginalTaxRatePct: OPERATING_ASSUMPTIONS.marginalTaxRatePct.default,
   };
 }
 

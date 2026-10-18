@@ -25,6 +25,12 @@ export const SOURCES = {
     "https://www.wko.at/information-consulting/immobilien-vermoegenstreuhaender/mindestruecklage-wohnungseigentumsgesetz",
   oviReserve2026: "https://www.ovi.at/aktuelles/detailansicht/anhebung-der-mindestruecklage-1-1-2026",
   mrg1: "https://www.ris.bka.gv.at/NormDokument.wxe?Abfrage=Bundesnormen&Gesetzesnummer=10002531&Paragraf=1",
+  estg16: "https://www.ris.bka.gv.at/NormDokument.wxe?Abfrage=Bundesnormen&Gesetzesnummer=10004570&Paragraf=16",
+  estg19: "https://www.ris.bka.gv.at/NormDokument.wxe?Abfrage=Bundesnormen&Gesetzesnummer=10004570&Paragraf=19",
+  estg33: "https://www.ris.bka.gv.at/NormDokument.wxe?Abfrage=Bundesnormen&Gesetzesnummer=10004570&Paragraf=33",
+  grundanteilV: "https://www.ris.bka.gv.at/GeltendeFassung.wxe?Abfrage=Bundesnormen&Gesetzesnummer=20009521",
+  lvo: "https://www.ris.bka.gv.at/GeltendeFassung.wxe?Abfrage=Bundesnormen&Gesetzesnummer=10004804",
+  bfgReserve2014: "https://linda.lindeverlag.at/Dokument/153221/",
 } as const;
 
 const MAKLER = "Standes- und Ausübungsregeln für Immobilienmakler";
@@ -43,4 +49,8 @@ export const METHOD_CITATIONS = {
   maklerOneSided: { legalBasis: `§ 12 Abs. 2 ${MAKLER}`, sourceUrl: SOURCES.makler },
   /** USt is not included in the caps. */
   maklerVatExcluded: { legalBasis: `§ 12 Abs. 1 ${MAKLER}`, sourceUrl: SOURCES.makler },
+  /** Prepaid costs of borrowing are spread evenly over the period they cover. */
+  loanCostsSpread: { legalBasis: "§ 19 Abs. 3 EStG 1988", sourceUrl: SOURCES.estg19 },
+  /** Repair-reserve contributions are deductible only when the reserve is spent. */
+  reserveDeduction: { legalBasis: "BFG 23.10.2014, RV/3100573/2014", sourceUrl: SOURCES.bfgReserve2014 },
 } satisfies Record<string, Citation>;

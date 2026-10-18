@@ -32,9 +32,10 @@ import type {
 } from "../types.js";
 import { ENGINE_VERSION } from "../version.js";
 import { acquisitionCosts, DISCLAIMER, InputError, LIMITATIONS, type InputIssue } from "./acquisitionCosts.js";
-import { annuitySchedule } from "./financing.js";
+import { annuitySchedule, type AnnuitySchedule } from "./financing.js";
 import { classifyRentRegulation, type Ownership } from "./rentRegulation.js";
 import { cite, RuleTracker } from "./ruleTracker.js";
+import { rentalTax } from "./tax.js";
 
 /** Risk-flag thresholds. Rules of thumb, not law; documented in docs/rules.md. */
 export const HEURISTICS = Object.freeze({
@@ -48,7 +49,11 @@ export const HEURISTICS = Object.freeze({
 
 export const UNDERWRITE_LIMITATIONS: readonly string[] = Object.freeze([
   ...LIMITATIONS,
-  "Cash flow is before income tax. Tax on rental income (AfA, Werbungskosten) comes in a later version.",
+  "Metrics and the cash-flow flags are before income tax; the tax section adds the after-tax view.",
+  "Income tax: the rental result is taxed at a flat marginal rate, or with the § 33 tariff of the valuation year when other taxable income is given. Tax credits (Absetzbeträge), other deductions and changes to the tariff in later years are ignored. Losses are offset only against other income of the same year.",
+  "Tax years are treated as loan years, and year 1 has a full year of rent. AfA takes the accelerated rates in full (§ 16 Abs. 1 Z 8 lit. e EStG); the land share follows the GrundanteilV 2016 unless given. VAT on acquisition costs stays in the AfA base, as for a landlord using the small-business exemption.",
+  "Repair-reserve contributions are deductible only when the reserve is spent. The yearly tax leaves them out; the Liebhaberei projection assumes they are spent and deducted within the horizon.",
+  "The mortgage registration fee is treated as a cost of borrowing and spread over the loan term (§ 19 Abs. 3 EStG); all other acquisition costs go into the AfA base.",
   "Rent, costs and the interest rate are held constant; no indexation, rent increases or rate resets after a fixed period.",
   "Rent inputs are taken as net of VAT; VAT on rent is not modelled.",
   "The minimum repair reserve is applied to the flat's own floor area; actual shares follow the co-ownership ratio.",
@@ -69,7 +74,15 @@ interface Normalised {
   operating: OperatingAssumptions;
   operatingDefaulted: OperatingAssumptionId[];
   acquisitionAssumptions: Partial<AcquisitionAssumptions>;
+  tax: {
+    otherIncomeCents?: Cents;
+    landSharePpm?: Ppm;
+    inhabitants?: number;
+    landPriceCents?: Cents;
+  };
 }
+
+const TAX_KEYS = ["otherTaxableIncome", "landSharePct", "municipalityInhabitants", "averageLandPricePerM2"];
 
 function normalise(input: UnderwriteInput, issues: InputIssue[]): Normalised {
   const amount = (path: string, value: unknown, allowZero: boolean): Cents => {
@@ -156,6 +169,37 @@ function normalise(input: UnderwriteInput, issues: InputIssue[]): Normalised {
     if (ratePpm !== undefined && termOk) loan = { ratePpm, ratePct: f.ratePct, termYears: f.termYears };
   }
 
+  // Tax facts
+  const tax: Normalised["tax"] = {};
+  if (input.tax !== undefined) {
+    if (typeof input.tax !== "object" || input.tax === null) {
+      issues.push({ path: "tax", message: "must be an object or omitted" });
+    } else {
+      const t = input.tax as Record<string, unknown>;
+      for (const key of Object.keys(t)) {
+        if (!TAX_KEYS.includes(key)) issues.push({ path: `tax.${key}`, message: `unknown field; expected one of ${TAX_KEYS.join(", ")}` });
+      }
+      if (t.otherTaxableIncome !== undefined) tax.otherIncomeCents = amount("tax.otherTaxableIncome", t.otherTaxableIncome, true);
+      if (t.landSharePct !== undefined) {
+        const ppm = typeof t.landSharePct === "number" ? pctToPpm(t.landSharePct) : undefined;
+        if (ppm === undefined || ppm < 0 || ppm > PPM_PER_UNIT) {
+          issues.push({ path: "tax.landSharePct", message: "must be a percentage from 0 to 100 with at most four decimals" });
+        } else {
+          tax.landSharePpm = ppm;
+        }
+      }
+      if (t.municipalityInhabitants !== undefined) {
+        const v = t.municipalityInhabitants;
+        if (typeof v !== "number" || !Number.isSafeInteger(v) || v < 0) {
+          issues.push({ path: "tax.municipalityInhabitants", message: "must be a whole number of at least 0" });
+        } else {
+          tax.inhabitants = v;
+        }
+      }
+      if (t.averageLandPricePerM2 !== undefined) tax.landPriceCents = amount("tax.averageLandPricePerM2", t.averageLandPricePerM2, true);
+    }
+  }
+
   // Assumptions: split into acquisition and operating
   const operating = defaultOperatingAssumptions();
   const operatingDefaulted: OperatingAssumptionId[] = [];
@@ -196,13 +240,14 @@ function normalise(input: UnderwriteInput, issues: InputIssue[]): Normalised {
     operating,
     operatingDefaulted,
     acquisitionAssumptions: acquisitionAssumptions as Partial<AcquisitionAssumptions>,
+    tax,
   };
 }
 
 /**
  * Underwrites an Austrian residential buy-to-let purchase: acquisition costs,
  * loan payment, monthly cash flow, yields, break-even rent, a rent-regulation
- * check and risk flags.
+ * check, income tax on the rental result with a Liebhaberei check, and risk flags.
  *
  * Pure and deterministic. Throws InputError (listing every problem) for
  * malformed input and RuleNotCoveredError outside the covered dates.
@@ -258,8 +303,9 @@ export function underwrite(input: UnderwriteInput): UnderwriteResult {
 
   // Financing
   let financing: FinancingResult | null = null;
+  let schedule: AnnuitySchedule | null = null;
   if (n.loan && loanCents > 0) {
-    const schedule = annuitySchedule(loanCents, n.loan.ratePpm, n.loan.termYears * 12);
+    schedule = annuitySchedule(loanCents, n.loan.ratePpm, n.loan.termYears * 12);
     financing = {
       loanCents,
       ratePct: n.loan.ratePct,
@@ -497,7 +543,39 @@ export function underwrite(input: UnderwriteInput): UnderwriteResult {
       citations: [],
     });
   }
-  const defaultedShown = n.operatingDefaulted.filter((id) => id !== "managementPct" && !(id === "maintenancePctPerYear" && n.maintenanceCents !== undefined));
+  // Rental income tax
+  const taxCalculation = rentalTax({
+    rules,
+    ownership,
+    unitsInBuilding: input.property?.unitsInBuilding,
+    buildingYear: input.property?.buildingYear,
+    totalInvestmentCents,
+    mortgageFeeCents: acquisition.lineItems.find((l) => l.id === "grundbuch.pfandrecht")?.amountCents ?? 0,
+    schedule,
+    termYears: financing?.termYears ?? 0,
+    monthly: {
+      rentCents,
+      vacancyCents,
+      managementCents,
+      maintenanceCents,
+      reserveCents,
+      noiCents: noi,
+    },
+    landShare: {
+      ...(n.tax.landSharePpm === undefined ? {} : { inputPpm: n.tax.landSharePpm }),
+      ...(n.tax.inhabitants === undefined ? {} : { municipalityInhabitants: n.tax.inhabitants }),
+      ...(n.tax.landPriceCents === undefined ? {} : { landPriceCentsPerM2: n.tax.landPriceCents }),
+      ...(input.property?.unitsInBuilding === undefined ? {} : { unitsInBuilding: input.property.unitsInBuilding }),
+    },
+    otherIncomeCents: n.tax.otherIncomeCents,
+    marginalRatePpm: pctToPpm(n.operating.marginalTaxRatePct) as Ppm,
+    marginalRateDefaulted: n.operatingDefaulted.includes("marginalTaxRatePct"),
+  });
+  flags.push(...taxCalculation.flags);
+
+  const defaultedShown = n.operatingDefaulted.filter(
+    (id) => id !== "managementPct" && id !== "marginalTaxRatePct" && !(id === "maintenancePctPerYear" && n.maintenanceCents !== undefined),
+  );
   if (defaultedShown.length > 0) {
     flags.push({
       id: "assumption.operatingDefaults",
@@ -523,6 +601,7 @@ export function underwrite(input: UnderwriteInput): UnderwriteResult {
     operating,
     metrics,
     rentRegulation,
+    tax: taxCalculation.tax,
     flags,
     assumptionsUsed: { ...acquisition.assumptionsUsed, ...n.operating },
     assumptionsDefaulted,

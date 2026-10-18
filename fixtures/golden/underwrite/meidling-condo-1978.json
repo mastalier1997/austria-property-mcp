@@ -57,10 +57,99 @@
       "status": "partial",
       "basis": "buildingYear"
     },
+    "tax": {
+      "method": "marginalRate",
+      "marginalRatePct": 40.0,
+      "landSharePct": 40.0,
+      "afa": {
+        "costBasisCents": 29593100,
+        "landShareCents": 11837240,
+        "buildingCents": 17755860
+      },
+      "loanCosts": {
+        "totalCents": 272800,
+        "spreadYears": 25
+      },
+      "years": [
+        {
+          "year": 1,
+          "netRentalIncomeCents": 909504,
+          "interestCents": 674435,
+          "afaCents": 799014,
+          "operatingCostsCents": 59736,
+          "loanCostsCents": 10912,
+          "reserveNotDeductedCents": 49200,
+          "resultCents": -634593,
+          "taxCents": -253837,
+          "cashFlowBeforeTaxCents": -295392,
+          "cashFlowAfterTaxCents": -41555
+        },
+        {
+          "year": 2,
+          "netRentalIncomeCents": 909504,
+          "interestCents": 657697,
+          "afaCents": 532676,
+          "operatingCostsCents": 59736,
+          "loanCostsCents": 10912,
+          "reserveNotDeductedCents": 49200,
+          "resultCents": -351517,
+          "taxCents": -140607,
+          "cashFlowBeforeTaxCents": -295392,
+          "cashFlowAfterTaxCents": -154785
+        },
+        {
+          "year": 3,
+          "netRentalIncomeCents": 909504,
+          "interestCents": 640297,
+          "afaCents": 266338,
+          "operatingCostsCents": 59736,
+          "loanCostsCents": 10912,
+          "reserveNotDeductedCents": 49200,
+          "resultCents": -67779,
+          "taxCents": -27112,
+          "cashFlowBeforeTaxCents": -295392,
+          "cashFlowAfterTaxCents": -268280
+        },
+        {
+          "year": 4,
+          "netRentalIncomeCents": 909504,
+          "interestCents": 622204,
+          "afaCents": 266338,
+          "operatingCostsCents": 59736,
+          "loanCostsCents": 10912,
+          "reserveNotDeductedCents": 49200,
+          "resultCents": -49686,
+          "taxCents": -19874,
+          "cashFlowBeforeTaxCents": -295392,
+          "cashFlowAfterTaxCents": -275518
+        },
+        {
+          "year": 5,
+          "netRentalIncomeCents": 909504,
+          "interestCents": 603394,
+          "afaCents": 266338,
+          "operatingCostsCents": 59736,
+          "loanCostsCents": 10912,
+          "reserveNotDeductedCents": 49200,
+          "resultCents": -30876,
+          "taxCents": -12350,
+          "cashFlowBeforeTaxCents": -295392,
+          "cashFlowAfterTaxCents": -283042
+        }
+      ],
+      "monthlyCashFlowAfterTaxYear1Cents": -3463,
+      "liebhaberei": {
+        "status": "totalSurplus",
+        "cumulativeResultCents": 2370141,
+        "totalSurplusFromYear": 20
+      }
+    },
     "flags": [
       "assumption.contractFee",
+      "assumption.landShare",
       "assumption.mortgageRegistration",
       "assumption.operatingDefaults",
+      "assumption.taxRate",
       "cashflow.negative",
       "rent.regulationEstimated"
     ]
@@ -69,7 +158,15 @@
     "Loan: annuity €174,850.00 at 3.9% over 25 years = €913.30 a month",
     "Vacancy: 4% × €927.00 = €37.08",
     "Maintenance: 0.2% × €298,659.00 ÷ 12 = €49.78",
-    "NOI €667.14, cash flow €-246.16 a month, break-even rent €1,051.42"
+    "NOI €667.14, cash flow €-246.16 a month, break-even rent €1,051.42",
+    "AfA basis: (€298,659.00 − €2,728.00 mortgage fee) × (1 − 40.0% land) = €177,558.60",
+    "Year 1: result €-6,345.93 (interest €6,744.35, AfA €7,990.14), tax €-2,538.37, cash flow after tax €-415.55",
+    "Year 2: result €-3,515.17 (interest €6,576.97, AfA €5,326.76), tax €-1,406.07, cash flow after tax €-1,547.85",
+    "Year 3: result €-677.79 (interest €6,402.97, AfA €2,663.38), tax €-271.12, cash flow after tax €-2,682.80",
+    "Liebhaberei: 25-year cumulative result with reserve deducted €23,701.41, totalSurplus"
   ],
-  "oracle": "Independent Python Fraction implementation (exact annuity, explicit rounding)."
+  "oracle": "Independent Python Fraction implementation (exact annuity, explicit rounding).",
+  "history": [
+    "Engine 0.3.0: added expected.tax and the tax flags (assumption.taxRate, assumption.landShare, tax.*) for the new tax module. Earlier expectations unchanged."
+  ]
 }

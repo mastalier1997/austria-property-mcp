@@ -38,7 +38,7 @@ function info(origin: string): Response {
     name: SERVER_NAME,
     version: SERVER_VERSION,
     description:
-      "MCP server for Austrian residential property: purchase costs, buy-to-let underwriting and MRG rent-cap checks, with every statutory number cited to its legal source.",
+      "MCP server for Austrian residential property: purchase costs, buy-to-let underwriting with rental income tax and MRG rent-cap checks, with every statutory number cited to its legal source.",
     mcpEndpoint: endpoint,
     transport: "streamable-http (stateless, JSON responses)",
     tools: ["estimate_acquisition_costs", "underwrite_property", "get_rules"],

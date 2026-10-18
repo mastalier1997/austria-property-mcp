@@ -54,11 +54,100 @@
       "status": "partial",
       "basis": "permitDate"
     },
+    "tax": {
+      "method": "marginalRate",
+      "marginalRatePct": 40.0,
+      "landSharePct": 40.0,
+      "afa": {
+        "costBasisCents": 26403000,
+        "landShareCents": 10561200,
+        "buildingCents": 15841800
+      },
+      "loanCosts": {
+        "totalCents": 234000,
+        "spreadYears": 25
+      },
+      "years": [
+        {
+          "year": 1,
+          "netRentalIncomeCents": 1200960,
+          "interestCents": 548736,
+          "afaCents": 712881,
+          "operatingCostsCents": 53280,
+          "loanCostsCents": 9360,
+          "reserveNotDeductedCents": 76320,
+          "resultCents": -123297,
+          "taxCents": -49319,
+          "cashFlowBeforeTaxCents": 150816,
+          "cashFlowAfterTaxCents": 200135
+        },
+        {
+          "year": 2,
+          "netRentalIncomeCents": 1200960,
+          "interestCents": 534743,
+          "afaCents": 475254,
+          "operatingCostsCents": 53280,
+          "loanCostsCents": 9360,
+          "reserveNotDeductedCents": 76320,
+          "resultCents": 128323,
+          "taxCents": 51329,
+          "cashFlowBeforeTaxCents": 150816,
+          "cashFlowAfterTaxCents": 99487
+        },
+        {
+          "year": 3,
+          "netRentalIncomeCents": 1200960,
+          "interestCents": 520226,
+          "afaCents": 237627,
+          "operatingCostsCents": 53280,
+          "loanCostsCents": 9360,
+          "reserveNotDeductedCents": 76320,
+          "resultCents": 380467,
+          "taxCents": 152187,
+          "cashFlowBeforeTaxCents": 150816,
+          "cashFlowAfterTaxCents": -1371
+        },
+        {
+          "year": 4,
+          "netRentalIncomeCents": 1200960,
+          "interestCents": 505161,
+          "afaCents": 237627,
+          "operatingCostsCents": 53280,
+          "loanCostsCents": 9360,
+          "reserveNotDeductedCents": 76320,
+          "resultCents": 395532,
+          "taxCents": 158213,
+          "cashFlowBeforeTaxCents": 150816,
+          "cashFlowAfterTaxCents": -7397
+        },
+        {
+          "year": 5,
+          "netRentalIncomeCents": 1200960,
+          "interestCents": 489527,
+          "afaCents": 237627,
+          "operatingCostsCents": 53280,
+          "loanCostsCents": 9360,
+          "reserveNotDeductedCents": 76320,
+          "resultCents": 411166,
+          "taxCents": 164466,
+          "cashFlowBeforeTaxCents": 150816,
+          "cashFlowAfterTaxCents": -13650
+        }
+      ],
+      "monthlyCashFlowAfterTaxYear1Cents": 16678,
+      "liebhaberei": {
+        "status": "totalSurplus",
+        "cumulativeResultCents": 11882816,
+        "totalSurplusFromYear": 3
+      }
+    },
     "flags": [
       "assumption.contractFee",
+      "assumption.landShare",
       "assumption.mortgageRegistration",
       "assumption.operatingDefaults",
       "assumption.reserveMinimum",
+      "assumption.taxRate",
       "financing.thinDscr"
     ]
   },
@@ -67,7 +156,15 @@
     "Vacancy: 4% × €1,230.00 = €49.20",
     "Reserve: statutory minimum 106 ct/m² × 60.0 m² = €63.60",
     "Maintenance: 0.2% × €266,370.00 ÷ 12 = €44.40",
-    "NOI €892.80, cash flow €125.68 a month, break-even rent €919.09"
+    "NOI €892.80, cash flow €125.68 a month, break-even rent €919.09",
+    "AfA basis: (€266,370.00 − €2,340.00 mortgage fee) × (1 − 40.0% land) = €158,418.00",
+    "Year 1: result €-1,232.97 (interest €5,487.36, AfA €7,128.81), tax €-493.19, cash flow after tax €2,001.35",
+    "Year 2: result €1,283.23 (interest €5,347.43, AfA €4,752.54), tax €513.29, cash flow after tax €994.87",
+    "Year 3: result €3,804.67 (interest €5,202.26, AfA €2,376.27), tax €1,521.87, cash flow after tax €-13.71",
+    "Liebhaberei: 25-year cumulative result with reserve deducted €118,828.16, totalSurplus"
   ],
-  "oracle": "Independent Python Fraction implementation (exact annuity, explicit rounding)."
+  "oracle": "Independent Python Fraction implementation (exact annuity, explicit rounding).",
+  "history": [
+    "Engine 0.3.0: added expected.tax and the tax flags (assumption.taxRate, assumption.landShare, tax.*) for the new tax module. Earlier expectations unchanged."
+  ]
 }
