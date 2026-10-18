@@ -5,7 +5,7 @@ How to publish the MCP server to npm, deploy the hosted endpoint on Cloudflare W
 ## Every release (quick)
 
 1. Bump the versions (mcp-server `package.json`, `SERVER_VERSION` in `src/server.ts`, `server.json` twice, worker `package.json`), update `docs/plan.md`, run `pnpm check`, commit and push.
-2. Run `.scriptselease.ps1`. It pulls, installs, checks, then publishes to npm, deploys the Worker and publishes to the MCP registry, stopping at the first failure.
+2. Run `.scriptselease.ps1`. It walks through pull, check, npm login and publish, Cloudflare login and deploy, and registry login and publish. Every step asks first, so you can log in, enter codes or skip a step that is already done; a failure offers retry, skip or quit.
 3. Check the three places it prints at the end. Registry "version already exists" means the earlier attempt went through; an auth error needs `mcp-publisher login github` again.
 
 The numbered sections below are the one-time setup and the manual steps behind the script.
