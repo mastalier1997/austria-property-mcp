@@ -14,7 +14,7 @@ pnpm test:watch
 ## Layout
 
 - `packages/engine`: pure TypeScript with zero runtime dependencies. Tests live in `packages/engine/test`.
-- `packages/mcp-server`: thin MCP wrapper, added in M3.
+- `packages/mcp-server`: thin MCP wrapper over stdio (`src/server.ts` registers the tools, `src/cli.ts` is the entry point). No calculation logic here: tools validate shape with zod, call the engine and format a summary. Range checks stay in the engine so agents get every problem at once. Never write to stdout outside the protocol.
 - `fixtures/golden`: golden cases with synthetic inputs. Expected values come from `fixtures/golden/oracle.py`, an independent Python implementation. Never generate them from the engine itself.
 - `docs/rules.md`: rule catalogue with sources. A test fails if a rule id or assumption is missing from it.
 

@@ -1,0 +1,30 @@
+{
+  "name": "@austria-property/mcp-server",
+  "version": "0.3.0",
+  "private": true,
+  "description": "MCP server exposing the Austrian property underwriting engine to AI agents.",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "bin": {
+    "austria-property-mcp": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/server.d.ts",
+      "default": "./dist/server.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && chmod +x dist/cli.js",
+    "typecheck": "tsc -p tsconfig.json",
+    "start": "node dist/cli.js"
+  },
+  "dependencies": {
+    "@austria-property/engine": "workspace:*",
+    "@modelcontextprotocol/sdk": "1.32.1",
+    "zod": "4.6.7"
+  }
+}

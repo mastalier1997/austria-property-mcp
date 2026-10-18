@@ -2,7 +2,54 @@
 
 A deterministic underwriting engine for Austrian residential buy-to-let property. Every number it returns cites its legal source. AI agents use it through MCP, and apps through an HTTP API.
 
-> **Status: M2.** Acquisition costs and underwriting (loan, cash flow, yields, break-even, rent-regulation check) work and are tested against verified rules (see [docs/rules.md](docs/rules.md)). The MCP server comes next. See [docs/plan.md](docs/plan.md) for the milestones.
+> **Status: M3.** The engine (acquisition costs, underwriting, rent-regulation check) is tested against verified rules (see [docs/rules.md](docs/rules.md)), and an MCP server exposes it to Claude and other agents over stdio. Hosting, npm and the MCP registry come next. See [docs/plan.md](docs/plan.md) for the milestones.
+
+## Use it from Claude (MCP)
+
+The server offers three read-only tools:
+
+| Tool | What it does |
+|---|---|
+| `estimate_acquisition_costs` | Purchase costs on top of the price (Grunderwerbsteuer, land-register fees, broker commission with legal-cap check, contract costs) |
+| `underwrite_property` | Full buy-to-let analysis: costs, loan payment, cash flow, yields, break-even rent, MRG rent caps, risk flags |
+| `get_rules` | The statutory values and default assumptions behind the numbers, with legal basis and source links |
+
+Each result has a short readable summary followed by the full result as JSON.
+
+Until it is published to npm, build it locally:
+
+```bash
+git clone https://github.com/mastalier1997/austria-property.git
+cd austria-property
+pnpm install && pnpm build
+```
+
+**Claude Code** (use the absolute path on your machine; add `--scope user` to use it in every project):
+
+```bash
+claude mcp add austria-property -- node /absolute/path/to/austria-property/packages/mcp-server/dist/cli.js
+```
+
+**Claude Desktop:** add this to `claude_desktop_config.json` (Windows: `%APPDATA%\Claude\`, macOS: `~/Library/Application Support/Claude/`) and restart the app. On Windows, write the path with forward slashes (`D:/Coding/austria-property/...`) or doubled backslashes:
+
+```json
+{
+  "mcpServers": {
+    "austria-property": {
+      "command": "node",
+      "args": ["/absolute/path/to/austria-property/packages/mcp-server/dist/cli.js"]
+    }
+  }
+}
+```
+
+**MCP Inspector**, to try the tools by hand:
+
+```bash
+npx @modelcontextprotocol/inspector node packages/mcp-server/dist/cli.js
+```
+
+Then ask, for example: *"What does a €249,000 flat in Graz cost to buy with 3% broker commission?"* or *"Underwrite this listing: €269k, 54 m² Eigentumswohnung built 1978, rent €795, 65% loan at 3.9% over 25 years."*
 
 ## Example
 
