@@ -39,7 +39,7 @@ Requires Node.js 20 or later.
 
 > Underwrite this listing: €269,000, 54 m² Eigentumswohnung built 1978, rent €795 plus €132 Betriebskosten, 65% loan at 3.9% over 25 years.
 
-The agent gets a short summary (cash flow before and after tax, yields, break-even rent, rent-regulation status, Liebhaberei check, flags) followed by the full result as JSON, with the legal basis for each line.
+The agent gets a short summary (cash flow before and after tax, yields, break-even rent, rent-regulation status, Liebhaberei check, flags) followed by the result as JSON. The JSON is compact by default (key figures, flags, deduplicated citations); pass `"detail": "full"` for every line with its calculation and legal basis.
 
 ## Limits
 

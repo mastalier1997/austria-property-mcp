@@ -15,10 +15,11 @@ import {
   type UnderwriteInput,
 } from "@austria-property/engine";
 import { acquisitionInput, rulesInput, underwriteInput } from "./schemas.js";
+import { compactAcquisition, compactUnderwrite } from "./shape.js";
 import { formatRuleValue, summariseAcquisition, summariseUnderwrite } from "./summary.js";
 
 /** Keep in sync with package.json (checked by a test). */
-export const SERVER_VERSION = "0.5.0";
+export const SERVER_VERSION = "0.6.0";
 export const SERVER_NAME = "austria-property";
 
 export interface ServerOptions {
@@ -92,16 +93,16 @@ export function createServer(options: ServerOptions = {}): McpServer {
         "real estate transfer tax (Grunderwerbsteuer), land-register court fees, broker commission with a check against the legal maximum, " +
         "and lawyer/notary contract costs, each with VAT where it applies. " +
         "Use when someone asks what buying a specific flat or house in Austria costs in total. " +
-        "Every statutory line cites its legal basis and source. Amounts in EUR. " +
+        "The JSON lists the cited legal bases and sources once; pass detail \"full\" for every line item with its calculation and its own citations. Amounts in EUR. " +
         "Not covered: bank or valuation fees, purchases within the family, exemptions for a primary residence.",
       inputSchema: acquisitionInput,
       annotations: ANNOTATIONS,
     },
-    async (args) => {
+    async ({ detail = "summary", ...args }) => {
       try {
         const input = withoutUndefined({ ...args, valuationDate: args.valuationDate ?? today() }) as AcquisitionCostsInput;
         const r = acquisitionCosts(input);
-        return result(summariseAcquisition(r), r);
+        return result(summariseAcquisition(r), detail === "full" ? r : compactAcquisition(r));
       } catch (error) {
         return toolError(error);
       }
@@ -118,15 +119,16 @@ export function createServer(options: ServerOptions = {}): McpServer {
         "depreciation (AfA) with the legal land share, a 25-year Liebhaberei check, and risk flags. " +
         "Use when evaluating whether a specific flat or house is a good buy-to-let deal. " +
         "Inputs in EUR; rents and owner costs are monthly and net of VAT. Pass what you know: missing facts fall back to documented assumptions and are flagged. " +
+        "The JSON is compact by default (key figures, flags, citations); pass detail \"full\" for every line, the tax years and the rules used. " +
         "Not covered: rent increases or interest-rate changes over time, tax credits, Richtwert surcharges and deductions (Zuschläge/Abschläge).",
       inputSchema: underwriteInput,
       annotations: ANNOTATIONS,
     },
-    async (args) => {
+    async ({ detail = "summary", ...args }) => {
       try {
         const input = withoutUndefined({ ...args, valuationDate: args.valuationDate ?? today() }) as UnderwriteInput;
         const r = underwrite(input);
-        return result(summariseUnderwrite(r), r);
+        return result(summariseUnderwrite(r), detail === "full" ? r : compactUnderwrite(r));
       } catch (error) {
         return toolError(error);
       }

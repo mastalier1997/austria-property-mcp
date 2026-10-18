@@ -5,6 +5,7 @@
  */
 import { AUSTRIAN_STATES } from "@austria-property/engine";
 import { z } from "zod";
+import { DETAILS } from "./shape.js";
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD");
 
@@ -34,6 +35,13 @@ export const broker = z
     }),
   ])
   .describe('Broker commission, or "none" if the purchase is commission-free (provisionsfrei).');
+
+const detail = z
+  .enum(DETAILS)
+  .optional()
+  .describe(
+    'How much of the result to return as JSON. "summary" (default) keeps the key figures, flags and deduplicated citations, about a tenth of the size. "full" adds every line item with its calculation, the tax years, the rules used and the assumptions. The readable text is the same in both.',
+  );
 
 const loanAmount = z.number().describe("Loan amount in EUR.");
 const registeredMortgageAmount = z
@@ -83,6 +91,7 @@ const operatingAssumptionFields = {
 
 export const acquisitionInput = {
   valuationDate,
+  detail,
   purchasePrice,
   broker,
   financing: z
@@ -97,6 +106,7 @@ export const acquisitionInput = {
 
 export const underwriteInput = {
   valuationDate,
+  detail,
   purchasePrice,
   broker,
   financing: z

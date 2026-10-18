@@ -14,7 +14,7 @@ The server offers three read-only tools:
 | `underwrite_property` | Full buy-to-let analysis: costs, loan payment, cash flow before and after income tax, yields, break-even rent, MRG rent caps with the Richtwert, AfA, Liebhaberei check, risk flags |
 | `get_rules` | The statutory values and default assumptions behind the numbers, with legal basis and source links |
 
-Each result has a short readable summary followed by the full result as JSON.
+Each result has a short readable summary followed by the result as JSON. The JSON is compact by default (key figures, flags, deduplicated citations; about 40% of the size for `underwrite_property`). Pass `"detail": "full"` for every line item with its calculation, the tax years and the rules used.
 
 **Claude Code** (add `--scope user` to use it in every project; on native Windows put `cmd /c` before `npx`):
 

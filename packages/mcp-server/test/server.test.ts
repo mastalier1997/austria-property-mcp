@@ -56,7 +56,7 @@ describe("MCP server", () => {
   });
 
   it("underwrites with the same numbers as the engine and the golden case", async () => {
-    const r = await call("underwrite_property", MEIDLING.input);
+    const r = await call("underwrite_property", { ...MEIDLING.input, detail: "full" });
     expect(r.isError).toBeFalsy();
     const data = json<UnderwriteResult>(r);
     expect(data).toEqual(underwrite(MEIDLING.input));
@@ -85,7 +85,7 @@ describe("MCP server", () => {
 
   it("passes tax facts through to the engine", async () => {
     const input = { ...MEIDLING.input, tax: { otherTaxableIncome: 45_000, municipalityInhabitants: 2_000_000 } };
-    const r = await call("underwrite_property", input);
+    const r = await call("underwrite_property", { ...input, detail: "full" });
     expect(r.isError).toBeFalsy();
     const data = json<UnderwriteResult>(r);
     expect(data.tax.method).toBe("tariff");
@@ -106,6 +106,7 @@ describe("MCP server", () => {
       financing: { loanAmount: 200000 },
     });
     expect(json<{ totalCents: number }>(r).totalCents).toBe(2_815_100);
+    expect(json<{ lineItems: object[] }>(r).lineItems[0]).not.toHaveProperty("calculation");
     expect(texts(r)[0]).toMatch(/\| \*\*Total\*\* \| \*\*€28,151\.00\*\* \| 11\.26% of the price \|/);
     expect(texts(r)[0]).toMatch(/§ 7 Abs\. 1 Z 3 GrEStG 1987/);
   });
@@ -146,6 +147,61 @@ describe("MCP server", () => {
     expect(data.rules.find((rule) => rule.id === "at.mrg.condominiumPermitAfter")?.value).toBe("1945-05-08");
     expect(data.rules.every((rule) => rule.sourceUrl.startsWith("https://"))).toBe(true);
     expect(data.assumptions.length).toBeGreaterThanOrEqual(7);
+  });
+});
+
+/** Every key of `part` exists in `whole` with an equal value; arrays match element by element in any position. */
+function isSubset(part: unknown, whole: unknown): boolean {
+  if (Array.isArray(part)) return Array.isArray(whole) && part.every((p) => whole.some((w) => isSubset(p, w)));
+  if (part !== null && typeof part === "object") {
+    if (whole === null || typeof whole !== "object") return false;
+    return Object.entries(part).every(([k, v]) => k in whole && isSubset(v, (whole as Record<string, unknown>)[k]));
+  }
+  return part === whole;
+}
+
+describe("detail levels", () => {
+  const cases = [
+    ["underwrite_property", MEIDLING.input],
+    ["underwrite_property", { ...MEIDLING.input, tax: { otherTaxableIncome: 45_000, municipalityInhabitants: 2_000_000 } }],
+    ["underwrite_property", { ...MEIDLING.input, financing: undefined }],
+    ["estimate_acquisition_costs", { purchasePrice: 250000, broker: { commissionPct: 3 }, financing: { loanAmount: 200000 } }],
+  ] as const;
+
+  it.each(cases)("%s: the summary is a much smaller subset of the full result", async (tool, input) => {
+    const summary = await call(tool, input);
+    const full = await call(tool, { ...input, detail: "full" });
+    const s = json<Record<string, unknown>>(summary);
+    const f = json<Record<string, unknown>>(full);
+    const { citations, ...rest } = s;
+    expect(isSubset(rest, f)).toBe(true);
+    // Citations are collected from the whole result: each one appears in it, none twice.
+    const fullText = texts(full)[1] as string;
+    const list = citations as { legalBasis: string; sourceUrl: string }[];
+    expect(list.length).toBeGreaterThan(0);
+    for (const c of list) expect(fullText).toContain(JSON.stringify(c));
+    expect(new Set(list.map((c) => c.sourceUrl + c.legalBasis)).size).toBe(list.length);
+    expect(texts(summary)[0]).toBe(texts(full)[0]);
+    expect((texts(summary)[1] as string).length * (tool === "underwrite_property" ? 2 : 1.5)).toBeLessThan(fullText.length);
+  });
+
+  it("keeps the figures an agent needs, and nothing else is required for the answer", async () => {
+    const s = json<Record<string, any>>(await call("underwrite_property", MEIDLING.input));
+    expect(s.metrics).toMatchObject({ totalInvestmentCents: expect.any(Number), equityCents: expect.any(Number), breakEvenRentCents: expect.any(Number) });
+    expect(s.financing.monthlyPaymentCents).toBeGreaterThan(0);
+    expect(s.tax.years.map((y: { year: number }) => y.year)).toEqual([1, 3]);
+    expect(s.rentRegulation.status).toBeDefined();
+    expect(s.rentCap.status).toBeDefined();
+    expect(s.tax.landShare.pct).toBeGreaterThan(0);
+    expect(s.tax.liebhaberei.status).toBeDefined();
+    expect(s.flags.every((f: object) => !("citations" in f))).toBe(true);
+    expect(s.disclaimer).toMatch(/not investment, tax or legal advice/);
+    expect(s.limitations.length).toBeGreaterThan(0);
+    expect(s.assumptionsUsed.vacancyPct).toBeDefined();
+  });
+
+  it("rejects an unknown detail level", async () => {
+    expect((await call("underwrite_property", { ...MEIDLING.input, detail: "everything" })).isError).toBe(true);
   });
 });
 
