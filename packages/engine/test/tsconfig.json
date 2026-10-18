@@ -1,0 +1,11 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "..",
+    "noEmit": true,
+    "resolveJsonModule": true,
+    // Tests may read fixtures from disk; the engine source may not (see ../tsconfig.json).
+    "types": ["node"]
+  },
+  "include": [".", "../src"]
+}

@@ -1,0 +1,48 @@
+{
+  "name": "odd-cents-paper-filing",
+  "description": "Price and loan with cents, paper filing in two applications, explicit registered mortgage, 3.6% broker with unknown seller commission.",
+  "input": {
+    "valuationDate": "2026-10-18",
+    "purchasePrice": 123456.78,
+    "broker": {
+      "commissionPct": 3.6
+    },
+    "financing": {
+      "loanAmount": 98765.43,
+      "registeredMortgageAmount": 125000
+    },
+    "assumptions": {
+      "grundbuchFiling": "paper",
+      "grundbuchApplications": 2
+    }
+  },
+  "expected": {
+    "lineItems": {
+      "grest": 432099,
+      "grundbuch.eigentum": 135900,
+      "grundbuch.pfandrecht": 150000,
+      "grundbuch.eingabe": 17000,
+      "broker.commission": 444444,
+      "broker.vat": 88889,
+      "contract.fee": 185185,
+      "contract.vat": 37037
+    },
+    "totalCents": 1490554,
+    "totalPctOfPrice": 12.07,
+    "flags": [
+      "assumption.contractFee",
+      "broker.lawfulOnlyIfSellerPaysNothing"
+    ]
+  },
+  "derivation": [
+    "Grunderwerbsteuer: 3.5% × €123,456.78 = €4,320.99",
+    "Eigentum: 1.1% × €123,457.00 = €1,358.03, up to €1,359.00 (paper, no reduction)",
+    "Pfandrecht: 1.2% × €125,000.00 = €1,500.00, up to €1,500.00",
+    "Eingabengebühr: €85.00 × 2 = €170.00",
+    "Broker: 3.6% × €123,456.78 = €4,444.44 + 20% USt €888.89",
+    "Broker cap: €3,703.70 per party, €7,407.41 if the seller pays nothing",
+    "Contract: 1.5% × €123,456.78 = €1,851.85 + 20% USt €370.37",
+    "Total: €14,905.54 = 12.07% of the price"
+  ],
+  "oracle": "Independent Python Decimal implementation, cross-checked by hand for vienna-250k-standard."
+}

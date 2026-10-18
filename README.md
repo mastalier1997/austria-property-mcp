@@ -2,7 +2,24 @@
 
 A deterministic underwriting engine for Austrian residential buy-to-let property. Every number it returns cites its legal source. AI agents use it through MCP, and apps through an HTTP API.
 
-> **Status: M0, scaffold only.** Nothing here is usable yet. See [docs/plan.md](docs/plan.md) for the plan and milestones.
+> **Status: M1.** Acquisition costs work and are tested against verified rules (see [docs/rules.md](docs/rules.md)). Underwriting and the MCP server come next. See [docs/plan.md](docs/plan.md) for the milestones.
+
+## Example
+
+```ts
+import { acquisitionCosts } from "@austria-property/engine";
+
+const result = acquisitionCosts({
+  valuationDate: "2026-10-18",
+  purchasePrice: 250_000,
+  broker: { commissionPct: 3, sellerPaysCommission: true },
+  financing: { loanAmount: 200_000 },
+});
+
+result.total;            // 28151
+result.totalPctOfPrice;  // 11.26
+result.lineItems[1];     // Grundbuch ownership fee: €2,720, with calculation and legal basis
+```
 
 ## What it will do
 

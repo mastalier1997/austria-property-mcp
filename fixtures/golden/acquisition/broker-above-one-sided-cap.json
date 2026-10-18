@@ -1,0 +1,41 @@
+{
+  "name": "broker-above-one-sided-cap",
+  "description": "7% commission with the seller paying nothing: above even the doubled cap.",
+  "input": {
+    "valuationDate": "2026-10-18",
+    "purchasePrice": 300000,
+    "broker": {
+      "commissionPct": 7,
+      "sellerPaysCommission": false
+    },
+    "assumptions": {
+      "contractFeePct": 1.5
+    }
+  },
+  "expected": {
+    "lineItems": {
+      "grest": 1050000,
+      "grundbuch.eigentum": 327000,
+      "grundbuch.eingabe": 6100,
+      "broker.commission": 2100000,
+      "broker.vat": 420000,
+      "contract.fee": 450000,
+      "contract.vat": 90000
+    },
+    "totalCents": 4443100,
+    "totalPctOfPrice": 14.81,
+    "flags": [
+      "broker.aboveCap"
+    ]
+  },
+  "derivation": [
+    "Grunderwerbsteuer: 3.5% × €300,000.00 = €10,500.00",
+    "Eigentum: 1.1% × €300,000.00 = €3,300.00, up to €3,300.00, minus €30.00 direct debit = €3,270.00",
+    "Eingabengebühr: €61.00 × 1 = €61.00",
+    "Broker: 7% × €300,000.00 = €21,000.00 + 20% USt €4,200.00",
+    "Broker cap: €9,000.00 per party, €18,000.00 if the seller pays nothing",
+    "Contract: 1.5% × €300,000.00 = €4,500.00 + 20% USt €900.00",
+    "Total: €44,431.00 = 14.81% of the price"
+  ],
+  "oracle": "Independent Python Decimal implementation, cross-checked by hand for vienna-250k-standard."
+}

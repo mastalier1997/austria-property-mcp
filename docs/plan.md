@@ -189,6 +189,11 @@ Write tool descriptions for agents. Each should say when to call the tool, the u
 - **Name** for the repo, npm scope and MCP server.
 - **Hosting** for M4.
 
+## Status
+
+- **M0 done** (2026-10-18): workspace, CI.
+- **M1 done** (2026-10-18): rule model, 11 verified rules (14 versions), `acquisitionCosts`, 8 golden cases from an independent oracle, boundary and property tests. Still open: grow to 20–30 golden cases and cross-check against a public calculator (see docs/rules.md, "Open checks").
+
 ## Decided
 
 - **License: AGPL-3.0-only** (October 2026). Anyone who modifies the engine and offers it to others, including as a hosted service, must publish their changes under AGPL. Commercial licences without AGPL terms stay possible while all the code has a single author. Decide on a CLA before accepting outside contributions.

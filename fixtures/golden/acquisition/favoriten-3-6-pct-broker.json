@@ -1,0 +1,44 @@
+{
+  "name": "favoriten-3-6-pct-broker",
+  "description": "The 'flagged' mock listing from property-cashflow: €198.5k, 3.6% broker, 70% loan.",
+  "input": {
+    "valuationDate": "2026-10-18",
+    "purchasePrice": 198500,
+    "broker": {
+      "commissionPct": 3.6
+    },
+    "financing": {
+      "loanAmount": 138950
+    }
+  },
+  "expected": {
+    "lineItems": {
+      "grest": 694750,
+      "grundbuch.eigentum": 215400,
+      "grundbuch.pfandrecht": 216800,
+      "grundbuch.eingabe": 6100,
+      "broker.commission": 714600,
+      "broker.vat": 142920,
+      "contract.fee": 297750,
+      "contract.vat": 59550
+    },
+    "totalCents": 2347870,
+    "totalPctOfPrice": 11.83,
+    "flags": [
+      "assumption.contractFee",
+      "assumption.mortgageRegistration",
+      "broker.lawfulOnlyIfSellerPaysNothing"
+    ]
+  },
+  "derivation": [
+    "Grunderwerbsteuer: 3.5% × €198,500.00 = €6,947.50",
+    "Eigentum: 1.1% × €198,500.00 = €2,183.50, up to €2,184.00, minus €30.00 direct debit = €2,154.00",
+    "Pfandrecht: 1.2% × €180,635.00 = €2,167.62, up to €2,168.00",
+    "Eingabengebühr: €61.00 × 1 = €61.00",
+    "Broker: 3.6% × €198,500.00 = €7,146.00 + 20% USt €1,429.20",
+    "Broker cap: €5,955.00 per party, €11,910.00 if the seller pays nothing",
+    "Contract: 1.5% × €198,500.00 = €2,977.50 + 20% USt €595.50",
+    "Total: €23,478.70 = 11.83% of the price"
+  ],
+  "oracle": "Independent Python Decimal implementation, cross-checked by hand for vienna-250k-standard."
+}

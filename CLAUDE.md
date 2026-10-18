@@ -15,8 +15,8 @@ pnpm test:watch
 
 - `packages/engine`: pure TypeScript with zero runtime dependencies. Tests live in `packages/engine/test`.
 - `packages/mcp-server`: thin MCP wrapper, added in M3.
-- `fixtures/golden`: hand-checked cases with synthetic inputs, added in M1.
-- `docs/rules.md`: rule catalogue with sources, added in M1.
+- `fixtures/golden`: golden cases with synthetic inputs. Expected values come from `fixtures/golden/oracle.py`, an independent Python implementation. Never generate them from the engine itself.
+- `docs/rules.md`: rule catalogue with sources. A test fails if a rule id or assumption is missing from it.
 
 ## Engine rules (non-negotiable)
 

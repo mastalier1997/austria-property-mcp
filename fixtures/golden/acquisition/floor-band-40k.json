@@ -1,0 +1,39 @@
+{
+  "name": "floor-band-40k",
+  "description": "€40k: 3% would be €1,200, but the § 12 Abs. 4 floor keeps the cap at €1,453.46, so 3.5% is lawful.",
+  "input": {
+    "valuationDate": "2026-10-18",
+    "purchasePrice": 40000,
+    "broker": {
+      "commissionPct": 3.5,
+      "sellerPaysCommission": true
+    },
+    "assumptions": {
+      "contractFeePct": 1
+    }
+  },
+  "expected": {
+    "lineItems": {
+      "grest": 140000,
+      "grundbuch.eigentum": 41000,
+      "grundbuch.eingabe": 6100,
+      "broker.commission": 140000,
+      "broker.vat": 28000,
+      "contract.fee": 40000,
+      "contract.vat": 8000
+    },
+    "totalCents": 403100,
+    "totalPctOfPrice": 10.08,
+    "flags": []
+  },
+  "derivation": [
+    "Grunderwerbsteuer: 3.5% × €40,000.00 = €1,400.00",
+    "Eigentum: 1.1% × €40,000.00 = €440.00, up to €440.00, minus €30.00 direct debit = €410.00",
+    "Eingabengebühr: €61.00 × 1 = €61.00",
+    "Broker: 3.5% × €40,000.00 = €1,400.00 + 20% USt €280.00",
+    "Broker cap: €1,453.46 per party, €2,906.91 if the seller pays nothing",
+    "Contract: 1% × €40,000.00 = €400.00 + 20% USt €80.00",
+    "Total: €4,031.00 = 10.08% of the price"
+  ],
+  "oracle": "Independent Python Decimal implementation, cross-checked by hand for vienna-250k-standard."
+}

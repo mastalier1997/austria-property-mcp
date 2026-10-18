@@ -1,0 +1,32 @@
+{
+  "name": "cash-no-broker",
+  "description": "Cash purchase without broker, contract fee set to 2%.",
+  "input": {
+    "valuationDate": "2026-10-18",
+    "purchasePrice": 189900,
+    "broker": "none",
+    "assumptions": {
+      "contractFeePct": 2
+    }
+  },
+  "expected": {
+    "lineItems": {
+      "grest": 664650,
+      "grundbuch.eigentum": 205900,
+      "grundbuch.eingabe": 6100,
+      "contract.fee": 379800,
+      "contract.vat": 75960
+    },
+    "totalCents": 1332410,
+    "totalPctOfPrice": 7.02,
+    "flags": []
+  },
+  "derivation": [
+    "Grunderwerbsteuer: 3.5% × €189,900.00 = €6,646.50",
+    "Eigentum: 1.1% × €189,900.00 = €2,088.90, up to €2,089.00, minus €30.00 direct debit = €2,059.00",
+    "Eingabengebühr: €61.00 × 1 = €61.00",
+    "Contract: 2% × €189,900.00 = €3,798.00 + 20% USt €759.60",
+    "Total: €13,324.10 = 7.02% of the price"
+  ],
+  "oracle": "Independent Python Decimal implementation, cross-checked by hand for vienna-250k-standard."
+}

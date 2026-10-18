@@ -1,6 +1,6 @@
 {
   "name": "@austria-property/engine",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "description": "Deterministic, source-cited underwriting engine for Austrian residential property.",
   "license": "AGPL-3.0-only",
@@ -17,6 +17,6 @@
   "sideEffects": false,
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "typecheck": "tsc -p tsconfig.json"
+    "typecheck": "tsc -p tsconfig.json && tsc -p test/tsconfig.json"
   }
 }

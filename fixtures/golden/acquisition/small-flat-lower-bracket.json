@@ -1,0 +1,39 @@
+{
+  "name": "small-flat-lower-bracket",
+  "description": "€30k flat: lower 4% bracket, broker exactly at the cap.",
+  "input": {
+    "valuationDate": "2026-10-18",
+    "purchasePrice": 30000,
+    "broker": {
+      "commissionPct": 4,
+      "sellerPaysCommission": true
+    },
+    "assumptions": {
+      "contractFeePct": 1
+    }
+  },
+  "expected": {
+    "lineItems": {
+      "grest": 105000,
+      "grundbuch.eigentum": 30000,
+      "grundbuch.eingabe": 6100,
+      "broker.commission": 120000,
+      "broker.vat": 24000,
+      "contract.fee": 30000,
+      "contract.vat": 6000
+    },
+    "totalCents": 321100,
+    "totalPctOfPrice": 10.7,
+    "flags": []
+  },
+  "derivation": [
+    "Grunderwerbsteuer: 3.5% × €30,000.00 = €1,050.00",
+    "Eigentum: 1.1% × €30,000.00 = €330.00, up to €330.00, minus €30.00 direct debit = €300.00",
+    "Eingabengebühr: €61.00 × 1 = €61.00",
+    "Broker: 4% × €30,000.00 = €1,200.00 + 20% USt €240.00",
+    "Broker cap: €1,200.00 per party, €2,400.00 if the seller pays nothing",
+    "Contract: 1% × €30,000.00 = €300.00 + 20% USt €60.00",
+    "Total: €3,211.00 = 10.70% of the price"
+  ],
+  "oracle": "Independent Python Decimal implementation, cross-checked by hand for vienna-250k-standard."
+}

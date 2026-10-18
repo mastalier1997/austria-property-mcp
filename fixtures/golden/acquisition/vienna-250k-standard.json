@@ -1,0 +1,44 @@
+{
+  "name": "vienna-250k-standard",
+  "description": "Typical buy-to-let: €250k, 3% broker (seller also pays), €200k loan, default assumptions.",
+  "input": {
+    "valuationDate": "2026-10-18",
+    "purchasePrice": 250000,
+    "broker": {
+      "commissionPct": 3,
+      "sellerPaysCommission": true
+    },
+    "financing": {
+      "loanAmount": 200000
+    }
+  },
+  "expected": {
+    "lineItems": {
+      "grest": 875000,
+      "grundbuch.eigentum": 272000,
+      "grundbuch.pfandrecht": 312000,
+      "grundbuch.eingabe": 6100,
+      "broker.commission": 750000,
+      "broker.vat": 150000,
+      "contract.fee": 375000,
+      "contract.vat": 75000
+    },
+    "totalCents": 2815100,
+    "totalPctOfPrice": 11.26,
+    "flags": [
+      "assumption.contractFee",
+      "assumption.mortgageRegistration"
+    ]
+  },
+  "derivation": [
+    "Grunderwerbsteuer: 3.5% × €250,000.00 = €8,750.00",
+    "Eigentum: 1.1% × €250,000.00 = €2,750.00, up to €2,750.00, minus €30.00 direct debit = €2,720.00",
+    "Pfandrecht: 1.2% × €260,000.00 = €3,120.00, up to €3,120.00",
+    "Eingabengebühr: €61.00 × 1 = €61.00",
+    "Broker: 3% × €250,000.00 = €7,500.00 + 20% USt €1,500.00",
+    "Broker cap: €7,500.00 per party, €15,000.00 if the seller pays nothing",
+    "Contract: 1.5% × €250,000.00 = €3,750.00 + 20% USt €750.00",
+    "Total: €28,151.00 = 11.26% of the price"
+  ],
+  "oracle": "Independent Python Decimal implementation, cross-checked by hand for vienna-250k-standard."
+}
