@@ -9,7 +9,7 @@ import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/
 import { createServer, SERVER_NAME, SERVER_VERSION } from "austria-property-mcp";
 
 const MCP_PATH = "/mcp";
-const SOURCE = "https://github.com/mastalier1997/austria-property";
+const SOURCE = "https://github.com/mastalier1997/austria-property-mcp";
 
 const CORS: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",

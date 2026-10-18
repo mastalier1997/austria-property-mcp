@@ -4,7 +4,7 @@
   "title": "Austria Property",
   "description": "Austrian property costs, buy-to-let underwriting and rent-cap checks, cited to the statute",
   "repository": {
-    "url": "https://github.com/mastalier1997/austria-property",
+    "url": "https://github.com/mastalier1997/austria-property-mcp",
     "source": "github",
     "subfolder": "packages/mcp-server"
   },

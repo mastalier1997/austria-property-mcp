@@ -47,8 +47,8 @@ The agent gets a short summary (cash flow, yields, break-even rent, rent-regulat
 - No income tax on rental income yet; rent, costs and interest are held constant.
 - The rent-regulation check uses building size, permit dates and public funding; it does not compute the Richtwert.
 
-Rule catalogue and sources: [docs/rules.md](https://github.com/mastalier1997/austria-property/blob/main/docs/rules.md).
+Rule catalogue and sources: [docs/rules.md](https://github.com/mastalier1997/austria-property-mcp/blob/main/docs/rules.md).
 
 ## License
 
-AGPL-3.0-only. Source: [github.com/mastalier1997/austria-property](https://github.com/mastalier1997/austria-property).
+AGPL-3.0-only. Source: [github.com/mastalier1997/austria-property-mcp](https://github.com/mastalier1997/austria-property-mcp).

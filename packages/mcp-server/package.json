@@ -6,12 +6,12 @@
   "author": "Jan Henrik Mastalier",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mastalier1997/austria-property.git",
+    "url": "git+https://github.com/mastalier1997/austria-property-mcp.git",
     "directory": "packages/mcp-server"
   },
-  "homepage": "https://github.com/mastalier1997/austria-property#readme",
+  "homepage": "https://github.com/mastalier1997/austria-property-mcp#readme",
   "bugs": {
-    "url": "https://github.com/mastalier1997/austria-property/issues"
+    "url": "https://github.com/mastalier1997/austria-property-mcp/issues"
   },
   "keywords": [
     "mcp",
