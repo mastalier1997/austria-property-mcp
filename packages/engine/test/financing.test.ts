@@ -2,10 +2,13 @@ import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import { annuityPayment, annuitySchedule } from "../src/index.js";
 
-/** Textbook float formula, only for comparison within a cent. */
+/**
+ * Textbook float formula, only for comparison within a cent. Uses expm1/log1p for 1 − (1+r)^−n:
+ * the naive form cancels catastrophically at tiny rates (3 ppm, 96 months is off by ~5e-4 cents).
+ */
 function floatPayment(loanCents: number, ratePpm: number, months: number): number {
   const r = ratePpm / 12_000_000;
-  return r === 0 ? loanCents / months : (loanCents * r) / (1 - (1 + r) ** -months);
+  return r === 0 ? loanCents / months : (loanCents * r) / -Math.expm1(-months * Math.log1p(r));
 }
 
 describe("annuityPayment", () => {
@@ -21,6 +24,11 @@ describe("annuityPayment", () => {
         },
       ),
     );
+  });
+
+  it("rounds a tiny-rate case from the exact value (3 ppm over 8 years)", () => {
+    // exact payment 3,760,374.5004 cents; the naive float formula gives 3,760,374.4999
+    expect(annuityPayment(360_991_575, 3, 96)).toBe(3_760_375);
   });
 
   it("divides the loan evenly at 0%", () => {
