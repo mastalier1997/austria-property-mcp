@@ -26,4 +26,6 @@ This software produces calculations. It is not investment, tax or legal advice.
 
 ## License
 
-To be decided before the repository goes public.
+[GNU AGPL-3.0-only](LICENSE). You may use, modify and host this software. If you modify it and let others use it over a network, you must publish your changes under the same licence.
+
+For commercial licensing without AGPL obligations, contact the author.

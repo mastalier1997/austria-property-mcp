@@ -187,10 +187,11 @@ Write tool descriptions for agents. Each should say when to call the tool, the u
 ## Open decisions
 
 - **Name** for the repo, npm scope and MCP server.
-- **License:**
-  - AGPL-3.0 stops others from running a closed hosted copy of your engine.
-  - MIT maximises adoption.
 - **Hosting** for M4.
+
+## Decided
+
+- **License: AGPL-3.0-only** (October 2026). Anyone who modifies the engine and offers it to others, including as a hosted service, must publish their changes under AGPL. Commercial licences without AGPL terms stay possible while all the code has a single author. Decide on a CLA before accepting outside contributions.
 
 ## Ground rules
 
