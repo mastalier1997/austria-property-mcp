@@ -193,7 +193,8 @@ Write tool descriptions for agents. Each should say when to call the tool, the u
 
 - **M3 done** (2026-10-18): `packages/mcp-server` with `estimate_acquisition_costs`, `underwrite_property` and `get_rules` over stdio (MCP SDK 1.32). Each result is a readable summary plus the full JSON; input errors and uncovered dates come back as tool errors the agent can fix. `valuationDate` defaults to today in Vienna. Tested in-memory, over stdio against the built CLI, and with MCP Inspector 2.11. Setup is in the README; verified in Claude Code on Windows on 2026-10-18.
 
-- **M4 prepared** (2026-10-18): repo public (history rewritten to a noreply author), npm package `austria-property-mcp` (engine bundled, verified from a packed tarball via npx), Cloudflare Worker with stateless streamable HTTP (tested in Node and locally in workerd; bundle 262 kB gzipped), `server.json` for the MCP registry. Still to do by hand: npm publish, Worker deploy, registry publish (docs/releasing.md). Free tier without API keys for now; keys come with a paid tier.
+- **M4 prepared** (2026-10-18): repo public (history rewritten to a noreply author), npm package `austria-property-mcp` (engine bundled, verified from a packed tarball via npx), Cloudflare Worker with stateless streamable HTTP (tested in Node and locally in workerd; bundle 262 kB gzipped), `server.json` for the MCP registry. Free tier without API keys for now; keys come with a paid tier.
+- **M4 published** (2026-10-18): npm `austria-property-mcp@0.3.0`; hosted at https://austria-property-mcp.jan-mastalier.workers.dev/mcp. MCP registry publish pending (registry database outage on 2026-10-18; retry). Done-when still open: first external user.
 
 ## Decided
 

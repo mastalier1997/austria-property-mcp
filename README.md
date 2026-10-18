@@ -2,7 +2,7 @@
 
 A deterministic underwriting engine for Austrian residential buy-to-let property. Every number it returns cites its legal source. AI agents use it through MCP, and apps through an HTTP API.
 
-> **Status: M4 in progress.** The engine (acquisition costs, underwriting, rent-regulation check) is tested against verified rules (see [docs/rules.md](docs/rules.md)). The MCP server runs locally via npm (`austria-property-mcp`) and as a hosted endpoint on Cloudflare Workers. See [docs/plan.md](docs/plan.md) for the milestones and [docs/releasing.md](docs/releasing.md) for publishing.
+> **Status: M4 — published.** The engine (acquisition costs, underwriting, rent-regulation check) is tested against verified rules (see [docs/rules.md](docs/rules.md)). The MCP server is on npm (`austria-property-mcp`) and runs as a free hosted endpoint on Cloudflare Workers. See [docs/plan.md](docs/plan.md) for the milestones and [docs/releasing.md](docs/releasing.md) for publishing.
 
 ## Use it from Claude (MCP)
 
@@ -37,7 +37,11 @@ To run from a local checkout instead: `pnpm install && pnpm build`, then use `no
 }
 ```
 
-**Hosted endpoint** (no install; stateless streamable HTTP): see [docs/releasing.md](docs/releasing.md) for the URL once deployed, then `claude mcp add --transport http austria-property <url>/mcp`.
+**Hosted endpoint** (no install; stateless streamable HTTP):
+
+```bash
+claude mcp add --transport http austria-property https://austria-property-mcp.jan-mastalier.workers.dev/mcp
+```
 
 **MCP Inspector**, to try the tools by hand:
 
