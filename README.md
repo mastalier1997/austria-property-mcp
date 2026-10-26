@@ -40,7 +40,7 @@ To run from a local checkout instead: `pnpm install && pnpm build`, then use `no
 **Hosted endpoint** (no install; stateless streamable HTTP):
 
 ```bash
-claude mcp add --transport http austria-property https://austria-property-mcp.jan-mastalier.workers.dev/mcp
+claude mcp add --transport http austria-property-hosted https://austria-property-mcp.jan-mastalier.workers.dev/mcp
 ```
 
 **MCP Inspector**, to try the tools by hand:
@@ -49,7 +49,9 @@ claude mcp add --transport http austria-property https://austria-property-mcp.ja
 npx @modelcontextprotocol/inspector npx -y austria-property-mcp
 ```
 
-Then ask, for example: *"What does a €249,000 flat in Graz cost to buy with 3% broker commission?"* or *"Underwrite this listing: €269k, 54 m² Eigentumswohnung built 1978, rent €795, 65% loan at 3.9% over 25 years."*
+Then ask, for example: *"What does a €249,000 flat in Graz cost to buy with 3% broker commission?"* or *"Underwrite this listing: €269k, 54 m² Eigentumswohnung built 1978, rent €795, 65% loan at 3.9% over 25 years."* The [package README](packages/mcp-server/README.md#example-question) shows what the agent gets back.
+
+Changes per release: [CHANGELOG.md](CHANGELOG.md).
 
 ## Example
 
