@@ -4,7 +4,7 @@ Versions are those of the npm package `austria-property-mcp`. The same version r
 
 ## Unreleased
 
-- Registry listing: icon (`assets/icon.svg`, `assets/icon.png`) and website URL in `server.json`. Takes effect in the registry with the next published version.
+- Registry listing: icon (`assets/icon.svg`, `assets/icon.png`, in the Ink & One Line style) and website URL in `server.json`. Takes effect in the registry with the next published version.
 
 ## 0.6.0 (2026-10-18)
 
