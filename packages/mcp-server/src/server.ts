@@ -19,7 +19,7 @@ import { compactAcquisition, compactUnderwrite } from "./shape.js";
 import { formatRuleValue, summariseAcquisition, summariseUnderwrite } from "./summary.js";
 
 /** Keep in sync with package.json (checked by a test). */
-export const SERVER_VERSION = "0.6.0";
+export const SERVER_VERSION = "0.6.1";
 export const SERVER_NAME = "austria-property";
 
 export interface ServerOptions {

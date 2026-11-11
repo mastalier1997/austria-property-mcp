@@ -2,7 +2,7 @@
 
 Versions are those of the npm package `austria-property-mcp`. The same version runs on the hosted endpoint and is listed in the MCP registry.
 
-## Unreleased
+## 0.6.1 (2026-11-11)
 
 - Registry listing: icon (`assets/icon.svg`, `assets/icon.png`, in the Ink & One Line style) and website URL in `server.json`. Takes effect in the registry with the next published version.
 
