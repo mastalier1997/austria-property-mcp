@@ -39,6 +39,11 @@ describe("MCP server", () => {
     expect(registry.packages[0]).toMatchObject({ identifier: pkg.name, version: pkg.version });
     expect(registry.name).toBe(pkg.mcpName);
     expect(registry.description.length).toBeLessThanOrEqual(100);
+    for (const icon of registry.icons) {
+      const file = icon.src.replace("https://raw.githubusercontent.com/mastalier1997/austria-property-mcp/main/", "../../../");
+      expect(file, "icons must point at a file in this repo").not.toBe(icon.src);
+      expect(() => readFileSync(join(import.meta.dirname, file))).not.toThrow();
+    }
     expect(client.getServerVersion()).toEqual({ name: "austria-property", version: SERVER_VERSION });
     expect(client.getInstructions()).toMatch(/not investment, tax or legal advice/);
   });

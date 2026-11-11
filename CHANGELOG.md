@@ -2,6 +2,10 @@
 
 Versions are those of the npm package `austria-property-mcp`. The same version runs on the hosted endpoint and is listed in the MCP registry.
 
+## Unreleased
+
+- Registry listing: icon (`assets/icon.svg`, `assets/icon.png`) and website URL in `server.json`. Takes effect in the registry with the next published version.
+
 ## 0.6.0 (2026-10-18)
 
 - `detail: "summary" | "full"` on `underwrite_property` and `estimate_acquisition_costs`, default `summary`. The compact JSON keeps key figures, flags and deduplicated citations; `underwrite_property` output is about 60% smaller.

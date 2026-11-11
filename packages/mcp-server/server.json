@@ -3,6 +3,23 @@
   "name": "io.github.mastalier1997/austria-property",
   "title": "Austria Property",
   "description": "Austrian property costs, buy-to-let underwriting, income tax and rent caps, cited to the statute",
+  "websiteUrl": "https://github.com/mastalier1997/austria-property-mcp#readme",
+  "icons": [
+    {
+      "src": "https://raw.githubusercontent.com/mastalier1997/austria-property-mcp/main/assets/icon.svg",
+      "mimeType": "image/svg+xml",
+      "sizes": [
+        "any"
+      ]
+    },
+    {
+      "src": "https://raw.githubusercontent.com/mastalier1997/austria-property-mcp/main/assets/icon.png",
+      "mimeType": "image/png",
+      "sizes": [
+        "256x256"
+      ]
+    }
+  ],
   "repository": {
     "url": "https://github.com/mastalier1997/austria-property-mcp",
     "source": "github",
