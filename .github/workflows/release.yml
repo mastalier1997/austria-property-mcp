@@ -1,0 +1,77 @@
+name: Release
+
+# Publishing a GitHub release tagged vX.Y.Z publishes that version to npm and
+# the MCP registry. No stored secrets: npm accepts this workflow as a trusted
+# publisher (configured on npmjs.com) and the registry accepts GitHub OIDC for
+# io.github.mastalier1997/*. The Cloudflare Worker is still deployed by hand.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm typecheck
+      - run: pnpm test
+
+      - name: Read the version
+        id: version
+        run: echo "version=$(node -p "require('./packages/mcp-server/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Tag must match the version
+        if: github.event_name == 'release'
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if [ "$TAG" != "v$VERSION" ]; then
+            echo "::error::Release tag $TAG does not match package version v$VERSION"
+            exit 1
+          fi
+
+      - name: Publish to npm
+        working-directory: packages/mcp-server
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          npm install -g npm@11
+          if npm view "austria-property-mcp@$VERSION" version >/dev/null 2>&1; then
+            echo "austria-property-mcp@$VERSION is already on npm, skipping"
+            exit 0
+          fi
+          # pnpm pack rewrites workspace: dependencies; npm publish does the trusted-publisher login.
+          pnpm pack --pack-destination "$RUNNER_TEMP"
+          npm publish "$RUNNER_TEMP/austria-property-mcp-$VERSION.tgz" --access public
+
+      - name: Publish to the MCP registry
+        working-directory: packages/mcp-server
+        run: |
+          curl -fsSL "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_linux_amd64.tar.gz" | tar xz mcp-publisher
+          ./mcp-publisher login github-oidc
+          # The registry checks the npm package, which can take a moment to appear.
+          for attempt in 1 2 3 4 5; do
+            ./mcp-publisher publish && exit 0
+            echo "Attempt $attempt failed, retrying in 30 s"
+            sleep 30
+          done
+          exit 1

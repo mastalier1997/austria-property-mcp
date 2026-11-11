@@ -2,6 +2,18 @@
 
 How to publish the MCP server to npm, deploy the hosted endpoint on Cloudflare Workers, and list it in the official MCP registry. Each step needs your own account login, so you run them yourself.
 
+## Every release from GitHub (works from a phone)
+
+`.github/workflows/release.yml` publishes to npm and the MCP registry when a GitHub release is published. It needs no stored secrets.
+
+One-time setup: on npmjs.com, open the `austria-property-mcp` package, then Settings → Trusted Publisher → GitHub Actions, with user `mastalier1997`, repository `austria-property-mcp` and workflow `release.yml`.
+
+1. Bump the versions as in step 1 below, commit and push to `main`.
+2. On GitHub: Releases → Draft a new release → tag `vX.Y.Z` on `main` (must equal the package version), paste the changelog entry, Publish release.
+3. Watch it under Actions. It runs the checks, skips npm if that version is already there, and retries the registry publish while npm catches up. A rerun can also be started there (Run workflow).
+
+The Cloudflare Worker is not deployed by the workflow; run `pnpm run deploy` in `packages/worker` from a PC when the hosted endpoint should report the new version.
+
 ## Every release (quick)
 
 1. Bump the versions (mcp-server `package.json`, `SERVER_VERSION` in `src/server.ts`, `server.json` twice, worker `package.json`), update `docs/plan.md` and `CHANGELOG.md`, run `pnpm check`, commit and push.
